@@ -1,0 +1,131 @@
+8-Sep-95	
+This is a list of the Programs in the QEssence 1 Bank for the QS6	
+
+0	Plus Grand
+1	Ballad Pno
+2	Fat Dyno  
+3	Piano Duel
+4	Crunchy EP
+5	AcousGrand
+6	FM PnoLite
+7	Trem-a-EP 
+8	BrashTines
+9	Parlor Pno
+10	ModWhlClav
+11	OB SynClav
+12	BachHarpsi
+13	BriteVibes
+14	Ethnicity 
+15	Celesta   
+16	Metallics 
+17	Voice Bell
+18	Glittrbell
+19	Timp&Glock
+20	ToneWhlPrc
+21	WarmTube B
+22	Full Draws
+23	Vacuum B  
+24	Surf Organ
+25	1 Drawbar 
+26	AFewDrwbrs
+27	PrcsvBlues
+28	Top40Organ
+29	Principale
+30	Stereo6Str
+31	Intimate  
+32	LA Guitar 
+33	DistGuitar
+34	EtherHrmnc
+35	NylonStrng
+36	DSP Acoust
+37	SftMuteGtr
+38	Corinth   
+39	RanchHands
+40	Crow Bass 
+41	Zapp Bass 
+42	Rezzo Bass
+43	Slap Me!  
+44	B Fat Bass
+45	No Frets! 
+46	HouserSplt
+47	ClearFrets
+48	Shark Bass
+49	RezPunchBs
+50	ArcoStrngs
+51	Anastrings
+52	RichString
+53	True Tron 
+54	Pizz Pluck
+55	String Pad
+56	StrQuartet
+57	Arco Cello
+58	Solo Viola
+59	Violin Ace
+60	Orchestra 
+61	Plus Brass
+62	Stabber   
+63	Jazz Mute 
+64	Sfz Horns 
+65	mfTrumpets
+66	Trombone  
+67	ClsclTrmpt
+68	ClsclBrass
+69	Clscl Tuba
+70	MoodyFlute
+71	Flute Ens 
+72	Transforms
+73	SoloBasoon
+74	1stClarnet
+75	Ebony Oboe
+76	LiteSoprno
+77	Brite Alto
+78	Tenor Solo
+79	Big O Bari
+80	Perihelion
+81	Pacifica  
+82	Coed Oohs 
+83	MixedChoir
+84	Night Vox 
+85	Empress   
+86	Wavechime 
+87	Anastasia 
+88	Vocoder   
+89	Vector Pad
+90	Slow Wave 
+91	BlueAurora
+92	MysticWind
+93	Afterglow 
+94	It's Big! 
+95	Vain Lead 
+96	Stab Synth
+97	TwistedSun
+98	Technoids 
+99	Tambigloxx
+100	RandomLead
+101	Triangular
+102	ClassicSqr
+103	Hard Lead 
+104	Things2Com
+105	RubbrGlock
+106	ChromeLead
+107	Atmossitar
+108	Rise&Shine
+109	Touchsaw  
+110	WaveNuWave
+111	TeknoStorm
+112	Suspender 
+113	Rave Haze 
+114	MonstrMash
+115	T-Minus 1 
+116	TheLostDay
+117	BroomMnstr
+118	Biot Speak
+119	Replicator
+120	D4 Pwr Kit
+121	Bomb Kit  
+122	Fusion Kit
+123	StandrdKit
+124	PercusvKit
+125	Hipp Kitt 
+126	TrAnCe KiT
+127	Big Dance

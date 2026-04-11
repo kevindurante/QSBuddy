@@ -1,0 +1,131 @@
+8-Sep-95	
+This is a list of the Programs in the QEssence 3 Bank for the QS6	
+
+0	MidwestPno
+1	Grand Idea
+2	Piano Cuts
+3	Mom'sPiano
+4	MoreSuitcs
+5	E.Pno 2001
+6	Hard Tines
+7	Funky P   
+8	Wurlilog  
+9	Arpiano   
+10	Digiculver
+11	Deepchimes
+12	Goodbellas
+13	MyPretties
+14	AudryVibes
+15	FMTineSeq 
+16	Percolate 
+17	Clav Bites
+18	Reggarimba
+19	Steelophon
+20	BradyOrgan
+21	Skywatch  
+22	AaahOrgan 
+23	PercyOrgan
+24	'76 Organ 
+25	Bigness   
+26	OrganHouse
+27	KeyClkCity
+28	Low Signs 
+29	Squeeze Me
+30	Coil Pick 
+31	MuteTation
+32	Metal Mess
+33	St.JazzGtr
+34	Over-Slide
+35	Sitarsis  
+36	HarmnicPad
+37	Journeyman
+38	OctJazzGtr
+39	ElecAcoust
+40	HotRodLncn
+41	SurfBassMW
+42	MeanMetalz
+43	PoppnSlaps
+44	Wetz      
+45	Flangebass
+46	GrooveBass
+47	Naztybaze 
+48	TrueAnalog
+49	Punch Bass
+50	Range     
+51	Synorch   
+52	MetalStrng
+53	StrngBend!
+54	A.StrngEns
+55	McStrings 
+56	DreemStrng
+57	Fusion Vln
+58	DramaStrng
+59	FattyStrng
+60	FlangyBraz
+61	MakeItBraz
+62	Rocky IX  
+63	Sawshank  
+64	SynthiHorn
+65	Herr Ober 
+66	Synclarion
+67	Oscar Says
+68	Backtalk  
+69	Brs Pocket
+70	SuperFlute
+71	Sexy Sax  
+72	BasicBassn
+73	SuperanoSx
+74	Barimore  
+75	BreatheSax
+76	Pickle O  
+77	Oddsemble 
+78	Sunrize   
+79	Melodium  
+80	BurntChrom
+81	Clock Head
+82	Eurosynth 
+83	AbrasiveAT
+84	Touch Poly
+85	DigiSquare
+86	CompPad MW
+87	SnazzyPerk
+88	AcidRelief
+89	Digibreath
+90	DeadlyDanc
+91	MassvSwell
+92	Nazty Duo 
+93	WarpdDrive
+94	Ice Pad   
+95	Sekwenz Me
+96	Connected 
+97	Danger Syn
+98	Fizisaw!  
+99	Fastpad   
+100	Squareage 
+101	Downsquare
+102	SweetDream
+103	Mellojckt 
+104	Dr.How  MW
+105	Jan Slider
+106	InnerSynMW
+107	TranSlider
+108	TheSnapper
+109	LifeForce 
+110	Rezneresk 
+111	Jungleism 
+112	Karn Evil 
+113	RecordStop
+114	Scratch   
+115	Noizofon  
+116	Horrortron
+117	Technocrat
+118	EStreetJam
+119	AcidMetalz
+120	Old School
+121	VinylSplit
+122	Rock Drumz
+123	Danz Drumz
+124	TeknoSplit
+125	Forge Drum
+126	Hand~Jams
+127	PiqueDrumz

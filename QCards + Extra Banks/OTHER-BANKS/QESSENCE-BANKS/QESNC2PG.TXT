@@ -1,0 +1,131 @@
+8-Sep-95	
+This is a list of the Programs in the QEssence 2 Bank for the QS6	
+
+0	VH Piano  
+1	CP Grand  
+2	Saloon Pno
+3	TingRhodes
+4	NylonEP   
+5	FM Light  
+6	FM Piaknow
+7	TremoRhods
+8	HouseLayer
+9	Jazzscapes
+10	2x4Marimba
+11	Woody Xylo
+12	Walk'nRide
+13	Bellisima 
+14	KalmbaRmba
+15	KalmbaPans
+16	MrningWood
+17	Digitype  
+18	Spoing    
+19	JangleBell
+20	ImaBelievr
+21	Piano&Orgn
+22	Palermo   
+23	HugeChurch
+24	HouseOrgan
+25	Syn Pipes 
+26	Huge Pipes
+27	SynAccrdn 
+28	BigHarmnca
+29	Organ Wash
+30	Jazzitar  
+31	HollowBody
+32	Plain Gtr 
+33	MuteGuitar
+34	Telekeys  
+35	Velo Mute 
+36	Grunchuggz
+37	HarmonyRow
+38	ElecAcoust
+39	Sintar    
+40	TiteUprite
+41	FreakMBass
+42	2Basses MW
+43	Fuzz Bass 
+44	Body Slap 
+45	Fuzz Slap 
+46	FatSynSlap
+47	Oogly Bass
+48	Woozy Bass
+49	BurbleBass
+50	NewChamber
+51	Chamberloo
+52	The Thick 
+53	Useful Pad
+54	70'sString
+55	Decade Str
+56	SynOvrture
+57	PizziMondo
+58	VintageStr
+59	Omniscient
+60	Brass Pow 
+61	ModW Brass
+62	FusinStack
+63	Atitood   
+64	SatCartoon
+65	Hannibal  
+66	StrangOrch
+67	Gabriel   
+68	Superhorns
+69	Tite Brass
+70	SaxSection
+71	Pan Chiff 
+72	BottleChif
+73	Wind Orch 
+74	Aspiration
+75	The Bosun 
+76	Phat Pipe 
+77	PlugdBottl
+78	Pipedreams
+79	Bagboe    
+80	Cyrinthion
+81	Digicomp  
+82	VintageRez
+83	Jwheels   
+84	Power Comp
+85	CometTrail
+86	Stepstones
+87	Steamballs
+88	AttackKeys
+89	Jurassic  
+90	Rezoidsyn 
+91	FlangeSync
+92	Star Gate 
+93	Skoochsaw 
+94	China Haze
+95	Rattler   
+96	Synth Pop 
+97	SynthNspel
+98	Synth Coil
+99	SpeckoSyn 
+100	SmoothSwep
+101	303 FiltMW
+102	MiniRave  
+103	Alert!    
+104	2nd Dawn  
+105	3rd Dawn  
+106	Sawazall  
+107	Fairvoxx  
+108	HyMinilead
+109	Industraat
+110	WailinWall
+111	Shufflin' 
+112	Play C /MW
+113	Shock Loop
+114	Orangutans
+115	JavaBeetle
+116	PulserLead
+117	Ritual!   
+118	LaserGroov
+119	PercGroove
+120	Ate oh Ate
+121	Tekno 2000
+122	NeinOhNein
+123	PercEchoMW
+124	Gate MW   
+125	Acid Jazz 
+126	It's A Hit
+127	Wiggly Hit

@@ -1,0 +1,103 @@
+8-Sep-95	
+This is a list of the Mixes in the QEssence 1 Bank for the QS6	
+
+0	Multitmbrl
+1	Piano Love
+2	PrettyTonk
+3	PopNcrunch
+4	EpEchoDuel
+5	FM AftrGlw
+6	EP Warmth 
+7	EP Tremble
+8	Rich Tines
+9	BigBacking
+10	St.Croix  
+11	OB Chrome 
+12	HappyHrpsi
+13	Good Vibes
+14	SpeaknBell
+15	Proto Bell
+16	AuroraToll
+17	SlickrBell
+18	Briter5ths
+19	Mood Perc 
+20	Erik'sLayr
+21	PerkyHamnd
+22	OrganSides
+23	MetroSplit
+24	Bee & Zapp
+25	So Smooth 
+26	SavoryOrgn
+27	Bass&Draws
+28	GigaSplit 
+29	HeavySplit
+30	Sam O'Sah 
+31	Curry Set 
+32	CloudGuitr
+33	Gtr Ghosts
+34	BeautyLayr
+35	6&4 Split 
+36	GtrProduct
+37	Prog Split
+38	GuitarPizz
+39	Lctristrng
+40	Crow&Grand
+41	Tine&Punch
+42	Zapp&Glow 
+43	CatchDBuzz
+44	ProsprSplt
+45	WillngSplt
+46	BassCentrl
+47	WallOfBass
+48	Vain&Bassy
+49	Zoiks Zone
+50	AthenaStrg
+51	StringBeds
+52	Diamond8va
+53	MacroStrng
+54	Strng&Tuba
+55	Part Pizzi
+56	Mello&Alto
+57	FullStrngs
+58	MelloBackr
+59	Strngalong
+60	Heroic Brs
+61	HarmonOrch
+62	mf Orch   
+63	StabbngLyr
+64	ManicBrass
+65	Koo Trumpt
+66	Brassilica
+67	ClearSplit
+68	B Fat&Stab
+69	UnderBrass
+70	Spartacus 
+71	IntimtMood
+72	AireeSplit
+73	PutOnAirs 
+74	Flooty 8va
+75	Tuba&Oboe 
+76	Duel&Sacks
+77	LtSop&Orch
+78	Reedy Layr
+79	TubicClari
+80	BlakLagoon
+81	BlazingLyr
+82	Twistilog 
+83	CharmedSyn
+84	Vain&Chrom
+85	RunnerSplt
+86	Super Wash
+87	Speed Rave
+88	Bass&Stab 
+89	Deadly Syn
+90	Press On! 
+91	PowerLunch
+92	Da Nasties
+93	PolyGroovr
+94	SpacerSplt
+95	BitSmasher
+96	Abraser X 
+97	NuWaveRave
+98	MonstrMosh
+99	Exo Groove

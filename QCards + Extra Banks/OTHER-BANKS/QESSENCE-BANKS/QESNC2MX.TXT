@@ -1,0 +1,103 @@
+8-Sep-95	
+This is a list of the Mixes in the QEssence 2 Bank for the QS6	
+
+0	Multitmbrl
+1	Pianostri 
+2	PerfctPair
+3	Rhodes'nMe
+4	Pianalogin
+5	Two FM    
+6	Zizzisyns 
+7	Deliciocty
+8	Wurlammond
+9	Nice Layer
+10	More 70's!
+11	90's Clav 
+12	Harpsirok 
+13	Bunchatoys
+14	St. Panz  
+15	MetalThmbs
+16	Metalrez  
+17	Pandemon'm
+18	BassicBell
+19	ClokStings
+20	Televnglst
+21	FugueTrons
+22	Piano&Orgn
+23	NastySplit
+24	FunkoSplat
+25	MassvPipes
+26	Hujiosity 
+27	Bass&Pipes
+28	Accordisyn
+29	Teknohouse
+30	DubblCoust
+31	Coustilayr
+32	Glitarr   
+33	Syntharr  
+34	Clean Layr
+35	CleanSplit
+36	MetalSplit
+37	HrmnySplit
+38	KotoFinish
+39	HurryCurry
+40	Coustisplt
+41	A Split   
+42	Bass + Pad
+43	Bass&ResLd
+44	Fretsyn   
+45	Syn&SynSyn
+46	FM Fuzz   
+47	Fuzz Slaps
+48	BassnBeat!
+49	AtomicBeat
+50	ViolinDuet
+51	With Solo 
+52	Chambers  
+53	With Cello
+54	Stately   
+55	Arco Pizzi
+56	Mangle Str
+57	Weezle Str
+58	ThikiPizzi
+59	WithAirPad
+60	Hornitude 
+61	Sy-FySplit
+62	FrenchOrch
+63	Cuts Layer
+64	Big'n Bryt
+65	Sidewaysyn
+66	Stabbrass 
+67	Circuitry 
+68	XpressSplt
+69	RathaBrass
+70	SplitFlute
+71	SoothingSp
+72	Brute&Flut
+73	Panscape  
+74	Perky Layr
+75	Orch&Winds
+76	Sax Club  
+77	Zinn Brass
+78	ChiffyLayr
+79	Windy Orch
+80	Rez Comp  
+81	Elevation 
+82	Comptron  
+83	Reztrola  
+84	Splitalog 
+85	AnaleadSpl
+86	2HandSweet
+87	Synth Jazz
+88	BassW/Comp
+89	2ManySplts
+90	Attackians
+91	1FingerHit
+92	Hero Song 
+93	Q Riddim  
+94	Diagnosis 
+95	SpaceDance
+96	Ritual    
+97	Confrntatn
+98	ThreeParts
+99	Werkian

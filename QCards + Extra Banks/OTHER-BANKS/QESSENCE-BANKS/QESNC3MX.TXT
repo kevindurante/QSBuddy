@@ -1,0 +1,103 @@
+8-Sep-95	
+This is a list of the Mixes in the QEssence 3 Bank for the QS6	
+
+0	Multitmbrl
+1	Hoedown   
+2	Tine-yPair
+3	Rhodes'n U
+4	Ice Rhodes
+5	Buzziano  
+6	Big Ballad
+7	Strims    
+8	Wurlammond
+9	Nice Layer
+10	Fairlipad!
+11	2010 Clav 
+12	Too Metal 
+13	Whotavibe 
+14	Xylofone  
+15	MetalPizzi
+16	Goodmetal 
+17	Steal Drum
+18	Trangslip 
+19	Biggr Bell
+20	LordyOrggy
+21	CandyOrgan
+22	TwoManuals
+23	EchoeSplit
+24	MeanySplit
+25	LeslyPipes
+26	Cathedral 
+27	Pipe'nBass
+28	Gypsy Rock
+29	Digimonica
+30	OctaCoustc
+31	Pickdilayr
+32	Aluminum  
+33	Nylon Joup
+34	Octaclean 
+35	DbldBasSpl
+36	Mute& Lead
+37	IntervlSpl
+38	SitaraDsrt
+39	HauntdWell
+40	WalknSplit
+41	Jamn Split
+42	Bass&SqrPd
+43	Slap&Roads
+44	Fretiano  
+45	Spad&Spayz
+46	Mean&Nazty
+47	PunchSurfr
+48	BoomChucka
+49	1st Octave
+50	Violano   
+51	Sect Duet 
+52	Stringler 
+53	String Art
+54	Ocralayer 
+55	Patrarco  
+56	Seriosynth
+57	SpeckOsyn!
+58	Dangerpizz
+59	Slarpy Pad
+60	PrornSplit
+61	Ice Brasst
+62	Tromblor! 
+63	SmombleLyr
+64	BrombleLyr
+65	SbrassLayr
+66	Brastab   
+67	Tremendous
+68	Tremulous 
+69	FadeaBrass
+70	Splootiano
+71	Splootitar
+72	Splinthoot
+73	Splinthipe
+74	Flipe Layr
+75	Soreedplit
+76	Saxano    
+77	Brax Layer
+78	WombleLayr
+79	Workler   
+80	Skwahd    
+81	Fizilishus
+82	SwellSwelz
+83	Pressmess 
+84	Buzztrons 
+85	'mazinGrax
+86	Too Rez   
+87	Squahzmod 
+88	Womp Split
+89	NoMorSplts
+90	StandngPad
+91	Rezco Hist
+92	Flanjitatn
+93	Pop Gruv  
+94	New Gloom 
+95	TenshnWash
+96	Dansplit  
+97	Haunted   
+98	The Creeps
+99	Completion
