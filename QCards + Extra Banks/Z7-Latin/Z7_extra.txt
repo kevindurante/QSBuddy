@@ -1,0 +1,231 @@
+PROGRAM LIST -- Z7-Extra.syx	
+0	Violin Ens
+1	Pets&Bones
+2	DreamFlute
+3	Solo Nylon
+4	StereoBass
+5	Hispianic 
+6	PrcussivEP
+7	SalsaVibes
+8	Squeeze Me
+9	BlowGun   
+10	Echo Brass
+11	Brass Ens1
+12	Brass Ens2
+13	Fat Brass 
+14	TouchBrass
+15	SlidrHorns
+16	Brass+Sax1
+17	Brass+Sax2
+18	Brass Oct1
+19	LargeBrass
+20	Trumpets! 
+21	MellowHrns
+22	SoloTrumpt
+23	Z7TrbSect 
+24	BrassPad  
+25	Brass Ens3
+26	Horn Comp1
+27	Horn Ens 1
+28	SalsaTrpts
+29	SilentWay 
+30	Dark Brass
+31	Z7SaxSect 
+32	Sax Ensmbl
+33	Flute Ens 
+34	PanPipes  
+35	EsotercPad
+36	Hrmncs+Air
+37	Accrdn Pad
+38	Eno Guitar
+39	Hrmncs4evr
+40	Nylon 1a  
+41	Nylon 2a  
+42	SterNylons
+43	2 Guitars 
+44	LaGuitarra
+45	SpanishGt2
+46	SilverGtr 
+47	BigQuattro
+48	Vibeitar  
+49	RoadGuitar
+50	FM Bottom 
+51	MariachBs2
+52	Guitarron2
+53	SpeedMutes
+54	String Ens
+55	SoloViolin
+56	Violinista
+57	ViolinSec2
+58	Violin Qt2
+59	Syn Violin
+60	Latin Dark
+61	SynPiano  
+62	Big Roadz 
+63	Perc Roadz
+64	Roadz 2   
+65	HitTheRoad
+66	PrcussvEP2
+67	Rdz+Vibes 
+68	Road Vibe 
+69	FM Vibe   
+70	Mariano   
+71	Velo Vibes
+72	BrakeVibes
+73	ClaveVibes
+74	SftMarimba
+75	Bs/Acrdion
+76	Reed Split
+77	StAcordion
+78	SqueezeBrs
+79	Loops&Acrd
+80	AfroBrazil
+81	AfroCaribn
+82	PercCombo6
+83	CarribnPrc
+84	Lps & Brs 
+85	Agogo     
+86	Junk Bit  
+87	CowbellVel
+88	CastnetVel
+89	SalsaBlVel
+90	DaBigDrums
+91	Timbales  
+92	Cabasa    
+93	Congas    
+94	TambrimVel
+95	RepiqueVel
+96	Batas     
+97	RubberDrum
+98	ShakerHit 
+99	Coro      
+100	Gong Pad  
+101	Wood Block
+102	Perc Flute
+103	Rdz&Flute 
+104	Rdz+Vbs+Ac
+105	Rdz&Gtrs  
+106	SineOTines
+107	Gtr Strums
+108	Loops&Prc3
+109	LatinLoops
+110	Understory
+111	Baila!    
+112	Potosi    
+113	Rapido    
+114	Brillante 
+115	BitterRain
+116	FireCircle
+117	Sabrosa   
+118	Patagonia 
+119	Shining   
+120	Brasilia  
+121	El Fuego  
+122	Guitar Ens
+123	Amazon    
+124	Corrida   
+125	SeaBreeze 
+126	Sintetico 
+127	Martini   
+	
+MIX LIST -- Z7-Extra.syx	
+0	Ensenada  
+1	Bass/Brs 2
+2	Brass/Tpt2
+3	Accrdn/Br2
+4	VlnAc&Hrns
+5	SolidBrass
+6	Saxz&Brass
+7	Grande Brs
+8	Brass&Road
+9	Brass&Cans
+10	Samba/Trp2
+11	SalsaSplt2
+12	Guitr/Lead
+13	Accrdn/Br3
+14	Bass/Winds
+15	Brasserie 
+16	GentlHorns
+17	Sessn Hrns
+18	StackOSaxz
+19	StruckTrpt
+20	Bass/Pad  
+21	Sudden Hit
+22	EP/Pad    
+23	Vln/Harmnx
+24	Pad Layer 
+25	Pan&Trumpt
+26	Pad&Violn 
+27	Starlit EP
+28	Pad&Guitar
+29	Pad&Vibes 
+30	16 Strings
+31	GuitarClub
+32	HowManyWyz
+33	PrettyPluk
+34	Pepito    
+35	CalleNueva
+36	Dos Manos 
+37	Lonely Gtr
+38	ChirpngGtr
+39	Strings&EP
+40	Bass/Vln 2
+41	Pno/Violn2
+42	Vibrolin  
+43	Brs/Violn2
+44	Strgs/Vln 
+45	Solo Bows 
+46	EP&Str Ens
+47	MalletQtet
+48	FullBodied
+49	Violin&Trp
+50	Piano/FMBs
+51	Pop Layer 
+52	Perc Piano
+53	Steel Pno 
+54	Cute Piano
+55	OctaveEPno
+56	LushOctave
+57	Tight Octv
+58	Extra Octv
+59	Sr. Foster
+60	Bass/EP 2 
+61	EP Octave2
+62	Claro     
+63	Silver EP 
+64	MarmbaVbes
+65	Mallet EP 
+66	Simpatico 
+67	EP&HornScn
+68	Snappy Brs
+69	SqueezEPno
+70	WhistlVibe
+71	Club Vibe 
+72	DynoVibes 
+73	Gtr&Vibes2
+74	Canz&Tines
+75	Accrdn/EBs
+76	MiguelNHel
+77	...Como?  
+78	De Verdad 
+79	ChiffAcrdn
+80	VistaBuena
+81	Me Gusta  
+82	GuitarLeak
+83	Noodling  
+84	BungieFlte
+85	BigMistaKt
+86	DoubledDrm
+87	Hit Drums 
+88	Ritmobil  
+89	ViralDrums
+90	WrongCard!
+91	Yucatan   
+92	Ciudad    
+93	Trabajando
+94	CncrtJungl
+95	Jalisco!  
+96	PisoMojado
+97	CalleLoco!
+98	Seguridad 
+99	Vamanos!  
