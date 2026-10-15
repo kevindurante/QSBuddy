@@ -5,6 +5,12 @@
             ▀▀▀▀▀• .▀  ▀    ·▀▀▀▀  ▀█▄▀▪▀▀ █▪·▀▀▀ • ▀█▄▀▪    ▀▀▀▀▀▀
 
 
+## QSBuddy Patch Browser
+
+Browse your QS6/QS7/QS8/QSR banks by name and audition every patch in this archive over MIDI, straight from Chrome or Edge with nothing to install.
+Open `patch-browser/index.html`, or read [patch-browser/README.md](patch-browser/README.md) for setup.
+
+
 
 After finally getting my hands on the QS8.1 SYNTH (30 years too late) I have come to realize that almost all of
 the related software and SysEX files are virtually extinct... 

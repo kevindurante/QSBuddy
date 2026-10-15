@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QSBuddy Patch Browser</title>
+  <meta name="description" content="Browse and audition Alesis QS6/QS7/QS8/QSR programs over MIDI.">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">QS</span>
+      <span class="brand-text"><strong>QSBuddy</strong><small>Patch Browser</small></span>
+    </div>
+
+    <div class="lcd" id="lcd" aria-live="polite">
+      <div class="lcd-top" id="lcdTop">NO PROGRAM SENT</div>
+      <div class="lcd-name" id="lcdName">----------</div>
+    </div>
+
+    <div class="midi-ports">
+      <label>Out <select id="outSelect" aria-label="MIDI output"></select></label>
+      <label>In <select id="inSelect" aria-label="MIDI input"></select></label>
+      <label>Ch <select id="chSelect" aria-label="MIDI channel"></select></label>
+      <span class="status" id="status" data-state="idle">Starting…</span>
+    </div>
+
+    <div class="top-actions">
+      <button type="button" class="btn" id="testNote" title="Hold to play middle C (or hold T)">&#9835; Test</button>
+      <button type="button" class="btn" id="panic" title="Send All Notes Off on every channel">Panic</button>
+      <button type="button" class="btn icon" id="settingsBtn" title="Settings and setup help" aria-label="Settings">&#9881;</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Banks"></nav>
+
+    <main class="main">
+      <div class="toolbar">
+        <div class="bank-heading">
+          <h1 id="bankTitle">&nbsp;</h1>
+          <p id="bankSub"></p>
+        </div>
+        <div class="toolbar-right">
+          <div class="bank-actions" id="bankActions"></div>
+          <input type="search" id="search" class="search" placeholder="Search every bank  ( / )" autocomplete="off" spellcheck="false" aria-label="Search programs">
+        </div>
+      </div>
+      <div class="notice" id="notice" hidden></div>
+      <div class="grid" id="grid" role="listbox" aria-label="Programs" tabindex="0"></div>
+      <div class="results" id="results" role="listbox" aria-label="Search results" hidden></div>
+    </main>
+
+    <aside class="inspector" id="inspector" aria-label="Program details">
+      <div id="inspectorBody"></div>
+      <details class="monitor" id="monitor">
+        <summary>MIDI monitor</summary>
+        <ol id="log" class="log"></ol>
+      </details>
+    </aside>
+  </div>
+
+  <div class="drop-overlay" id="dropOverlay" hidden>Drop .syx files to open them</div>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <input type="file" id="fileInput" accept=".syx,.pat" multiple hidden>
+
+  <dialog id="storeDialog" class="dialog">
+    <form method="dialog">
+      <h2>Store to a User slot</h2>
+      <p>Writes <strong id="storeName"></strong> (program and its effect) into the QS User bank. Whatever is in that slot now is replaced, and the QS has no undo for this.</p>
+      <label class="field">User slot
+        <input type="number" id="storeSlot" min="0" max="127" step="1" required>
+      </label>
+      <p class="muted" id="storeCurrent"></p>
+      <div class="dialog-actions">
+        <button type="submit" class="btn" value="cancel" formnovalidate>Cancel</button>
+        <button type="submit" class="btn danger" value="ok" id="storeConfirm">Overwrite</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog" class="dialog wide">
+    <form method="dialog">
+      <h2>Settings</h2>
+      <label class="check"><input type="checkbox" id="setProgramMode"> Switch the QS to Program mode before changing patches</label>
+      <label class="check"><input type="checkbox" id="setArrowSend"> Send patches while moving with the arrow keys</label>
+      <label class="check"><input type="checkbox" id="setFollow"> Follow program changes made on the QS front panel</label>
+
+      <h3>Setting up the QS</h3>
+      <ol class="setup">
+        <li>Connect a MIDI cable from your interface's <b>Out</b> to the QS <b>MIDI In</b>. To read names from the QS, also connect the QS <b>MIDI Out</b> to your interface's <b>In</b>.</li>
+        <li>On the QS press <b>GLOBAL</b> and find the MIDI page: set <b>Prog Select</b> to <b>On</b> (or to the channel you pick here) and <b>General MIDI</b> to <b>Off</b>. With Prog Select off the QS ignores program changes; with General MIDI on it ignores bank changes.</li>
+        <li>Set the channel here to the QS's Program mode channel (channel 1 unless you changed it).</li>
+        <li>Close any DAW or other app that has the MIDI ports open. On Windows only one app can use a MIDI port at a time.</li>
+      </ol>
+      <p class="muted">Library patches go to the QS edit buffer only, so your User bank isn't touched until you press STORE on the QS or use "Store to User…" here.</p>
+
+      <h3>Saved data</h3>
+      <p class="muted">Names read from the QS, card choices and favorites are saved in this browser.</p>
+      <button type="button" class="btn" id="forgetScans">Forget names read from the QS</button>
+
+      <div class="dialog-actions">
+        <button type="submit" class="btn primary" value="close">Done</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/qs-sysex.js"></script>
+  <script src="js/qs-params.js"></script>
+  <script src="js/library.js"></script>
+  <script src="library/index.js"></script>
+  <script src="js/midi.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
