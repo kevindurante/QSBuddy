@@ -11,7 +11,7 @@ A patch browser and program changer for the Alesis QS6 / QS7 / QS8 / QSR, built 
 ## Quick start
 
 1. Connect your MIDI interface **Out → QS MIDI In**. For reading names, also connect **QS MIDI Out → interface In**.
-2. On the QS, press **GLOBAL**, go to the MIDI page and set **Prog Select** (MIDI PrgSl) to **On**, and **General MIDI** to **Off**. With Prog Select off the QS ignores program changes; in General MIDI mode it ignores bank changes.
+2. On the QS, press **PROGRAM**, then **GLOBAL**, go to the MIDI page and set **MIDI Program Select** (PrgSl) to **On**, and **General MIDI** to **Off**. With Program Select off the QS ignores program changes; in General MIDI mode it ignores bank changes.
 3. Open `patch-browser/index.html` in **Chrome or Edge** and allow MIDI (including SysEx) when asked.
    If the browser doesn't ask, or blocks MIDI for files opened from disk, run the local server instead:
    ```bash
@@ -21,7 +21,25 @@ A patch browser and program changer for the Alesis QS6 / QS7 / QS8 / QSR, built 
 
 Close your DAW (or any app holding the MIDI ports) first. On Windows only one program can use a MIDI port at a time.
 
-No synth handy? Open `index.html?demo` (or `http://localhost:8765/?demo`) to drive a pretend QS7.
+No synth handy? Open `index.html?demo` (or `http://localhost:8765/?demo`) to drive a pretend QS7. Add `&progsel=off` to make it ignore program changes, the way a QS does with Program Select off.
+
+### Patches not changing?
+
+Open **Settings (⚙) → Test the connection**. With the QS MIDI Out connected, it checks each link in turn and reads back what the QS actually did:
+
+- **No answer from the QS:** the cable from the QS MIDI Out, or the In port picked here.
+- **The QS ignored the program change:** the QS isn't in Program mode, MIDI Program Select is off or set to another channel, or General MIDI is on. Fix it on the QS (step 2 above), or set **Ch** here to match.
+- **No answer to a SysEx query, or the QS didn't take a SysEx dump:** something on the way to the QS is dropping SysEx. Program changes still work, but auditions, reading names and Store to User need SysEx to arrive intact.
+
+#### Going through a sequencer or MIDI chain
+
+Bank Select and Program Change are ordinary channel messages, so they get through almost any chain. SysEx only gets through boxes that pass it untouched:
+
+- Plain hardware thru splitters pass it.
+- Sequencers and grooveboxes (for example an Elektron Digitone in front of the QS) often forward only channel messages, or only on their THRU jack. Check the box's MIDI port settings.
+- If the chain won't pass SysEx, either plug the interface straight into the QS MIDI In while you audition or store patches, or add a MIDI merger that passes SysEx in front of the QS: one input from the chain, one direct from a spare interface output. Then pick that direct output here.
+
+If the **Test** button plays notes but patches don't change and you have no MIDI In, the QS setting in step 2 is the usual cause.
 
 ## Using it
 

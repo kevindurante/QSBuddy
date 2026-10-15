@@ -427,6 +427,14 @@ button, input, select { font: inherit; color: inherit; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 .setup { margin: 0 0 12px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
 .muted { color: var(--muted); font-size: 13px; }
+.diag-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.diag { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.diag:empty { display: none; }
+.diag li { display: grid; grid-template-columns: 18px 1fr; gap: 6px; }
+.diag li::before { font-weight: 700; }
+.diag .diag-ok::before { content: "\2713"; color: var(--ok); }
+.diag .diag-fail::before { content: "\2717"; color: var(--danger); }
+.diag .diag-info::before { content: "\2022"; color: var(--muted); }
 
 /* ---------- responsive ---------- */
 @media (max-width: 1180px) {

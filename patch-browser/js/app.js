@@ -77,7 +77,7 @@
     userEdits: store.get('userEdits', {}),
     favs: store.get('favs', []),
     collapsed: store.get('openGroups', { factory: false }),
-    settings: Object.assign({ programMode: true, arrowSend: true, follow: true }, store.get('settings', {})),
+    settings: Object.assign({ arrowSend: true, follow: true }, store.get('settings', {})),
     files: [],
     fileSeq: 0,
     identity: null,
@@ -276,9 +276,11 @@
     return audition(ref);
   }
 
+  // Plain Bank Select + Program Change only. Don't put SysEx (such as Mode
+  // Select) in front of it: on real hardware that can make the QS re-load its
+  // previous program, and cheap USB-MIDI cables can mangle what follows SysEx.
   function sendSynth(sb, ref) {
     if (!needOutput()) return false;
-    if (state.settings.programMode && midi.sysex) midi.send(QS.build.modeSelect(false));
     midi.send(QS.build.bankSelect(state.ch, sb.cc));
     midi.send(QS.build.programChange(state.ch, ref.n));
     setLive(ref, 'program');
@@ -293,7 +295,6 @@
     }
     return getProgramData(ref).then(function (d) {
       if (!d || !d.program) return false;
-      if (state.settings.programMode) midi.send(QS.build.modeSelect(false));
       midi.send(QS.build.editProgramDump(0, d.program));
       if (d.effect) midi.send(QS.build.editEffectDump(0, d.effect));
       setLive(ref, 'edit');
@@ -383,7 +384,7 @@
     else if (!midi.sysex) { text = 'No SysEx'; st = 'warn'; title = 'Program changes work. Allow SysEx to audition library patches and read names.'; }
     else if (!midi.in) { text = 'Output only'; st = 'ok'; title = 'Program changes and auditions work. Pick a MIDI In to read names from the QS.'; }
     else if (state.inquiry === 'pending') { text = 'Looking for the QS…'; st = 'idle'; }
-    else if (state.inquiry === 'none') { text = 'No reply from QS'; st = 'warn'; title = 'Sending still works. Check the cable from the QS MIDI Out to your MIDI In. Click to retry.'; }
+    else if (state.inquiry === 'none') { text = 'No reply from QS'; st = 'warn'; title = 'Program changes still work. Either SysEx isn\'t reaching the QS (a sequencer or merger in the MIDI chain may drop it), or the QS MIDI Out isn\'t connected to your MIDI In. Click to retry.'; }
     else { text = 'Ready'; st = 'ok'; }
     el.textContent = text;
     el.dataset.state = st;
@@ -931,6 +932,8 @@
   }
 
   /* ---------------- reading names from the QS ---------------- */
+  function isEditDump(b, p) { return p && p.kind === 'qs' && p.op === QS.OP.EDIT_PROGRAM; }
+
   function scanBank(sb) {
     if (state.scan) return;
     if (!needOutput()) return;
@@ -943,12 +946,10 @@
     var datas = new Array(128).fill(null);
 
     function isUserDump(n) { return function (b, p) { return p && p.kind === 'qs' && p.op === QS.OP.USER_PROGRAM && p.num === n; }; }
-    function isEditDump(b, p) { return p && p.kind === 'qs' && p.op === QS.OP.EDIT_PROGRAM; }
 
     (async function () {
       var error = null;
       try {
-        if (sb.id !== 'user' && state.settings.programMode) midi.send(QS.build.modeSelect(false));
         for (var n = 0; n < 128; n++) {
           if (scan.cancel) break;
           var reply;
@@ -1000,6 +1001,95 @@
       if (sb.id !== 'user' && state.live) sendRef(state.live);
       renderAll();
     })();
+  }
+
+  /* ---------------- connection test ----------------
+   * Checks each link in turn and reads the QS edit buffer back to see
+   * whether a program change and a SysEx audition actually landed.
+   */
+  var diagRunning = false;
+
+  function readEditName() {
+    return midi.request(QS.build.editProgramRequest(0), isEditDump, 1500).then(function (p) {
+      return QS.programName(p.data).trimEnd();
+    });
+  }
+
+  async function runDiagnostics() {
+    if (diagRunning) return;
+    diagRunning = true;
+    var list = $('diagResults');
+    var btn = $('runDiag');
+    btn.disabled = true;
+    list.innerHTML = '';
+    function line(kind, text) {
+      var li = document.createElement('li');
+      li.className = 'diag-' + kind;
+      li.textContent = text;
+      list.appendChild(li);
+    }
+    var ch = state.ch + 1;
+    var touched = false;
+    try {
+      if (!midi.out) { line('fail', 'No MIDI output is selected. Pick the port that goes to the QS MIDI In.'); return; }
+      line('ok', 'Sending to "' + midi.out.name + '" on channel ' + ch + '.');
+      if (!midi.sysex) {
+        line('fail', 'SysEx access is off, so this test and library auditions can\'t work. Allow SysEx in the site settings next to the address bar, then reload.');
+        return;
+      }
+      if (!midi.in) {
+        line('info', 'No MIDI In is selected, so the test can\'t see what the QS does. Connect the QS MIDI Out to your interface and pick that port as In.');
+        return;
+      }
+      try {
+        var id = await midi.request(QS.build.deviceInquiry(), function (b, p) { return p && p.kind === 'identity'; }, 1500);
+        state.identity = id;
+        state.inquiry = 'done';
+        renderStatus();
+        line('ok', 'The QS answered: ' + id.model + ' v' + id.version + '.');
+      } catch (e) {
+        line('fail', 'No answer to a SysEx query. Either SysEx isn\'t reaching the QS, or the QS MIDI Out isn\'t connected back to "' +
+          midi.in.name + '". If program changes work but library auditions don\'t, it\'s the first: something between the computer ' +
+          'and the QS (a sequencer, merger or MIDI processor) is dropping SysEx. Auditions need a SysEx-clean path to the QS MIDI In.');
+        return;
+      }
+
+      var before = await readEditName();
+      line('info', 'The QS is playing "' + before + '".');
+
+      var names = LIB['factory-p1'].info.names;
+      var n = names[0] === before ? 1 : 0;
+      touched = true;
+      midi.send(QS.build.bankSelect(state.ch, 1));
+      midi.send(QS.build.programChange(state.ch, n));
+      await sleep(400);
+      var after = await readEditName();
+      if (after === names[n]) {
+        line('ok', 'Program changes work: the QS switched to Preset 1 ' + pad3(n) + ' "' + after + '".');
+      } else if (after !== before) {
+        line('ok', 'Program changes work: the QS switched to "' + after + '". Your Preset 1 names differ from this browser\'s, so use "Read names from QS" on the Preset banks.');
+      } else {
+        line('fail', 'The QS ignored Bank Select 1 + Program Change ' + n + ' on channel ' + ch + '. On the QS, press PROGRAM to be in Program mode, then under GLOBAL set MIDI Program Select to On (or to channel ' + ch + ') and General MIDI to Off.');
+      }
+
+      var p2 = await window.QSLIB.load('factory-p2');
+      var expect = QS.programName(p2.programs[0]).trimEnd();
+      midi.send(QS.build.editProgramDump(0, p2.programs[0]));
+      await sleep(400);
+      var edited = await readEditName();
+      if (edited === expect) {
+        line('ok', 'SysEx auditions work: the QS edit buffer now holds "' + edited + '".');
+      } else {
+        line('fail', 'The QS didn\'t take a SysEx program dump (it still shows "' + edited + '"). Something in the MIDI path is dropping or ' +
+          'cutting long SysEx messages: a sequencer or merger in the chain, or a cheap USB-MIDI cable.');
+      }
+    } catch (err) {
+      line('fail', 'The test stopped: ' + err.message + '.');
+    } finally {
+      diagRunning = false;
+      btn.disabled = false;
+      if (touched && state.live) sendRef(state.live);
+    }
   }
 
   /* ---------------- store to user ---------------- */
@@ -1261,12 +1351,18 @@
 
     // settings
     $('settingsBtn').addEventListener('click', function () {
-      $('setProgramMode').checked = state.settings.programMode;
       $('setArrowSend').checked = state.settings.arrowSend;
       $('setFollow').checked = state.settings.follow;
       $('settingsDialog').showModal();
     });
-    [['setProgramMode', 'programMode'], ['setArrowSend', 'arrowSend'], ['setFollow', 'follow']].forEach(function (pair) {
+    $('runDiag').addEventListener('click', runDiagnostics);
+    $('programModeBtn').addEventListener('click', function () {
+      if (!needOutput()) return;
+      if (!midi.sysex) { toast('This needs SysEx access. Reload and allow it.', true); return; }
+      midi.send(QS.build.modeSelect(false));
+      toast('Asked the QS to switch to Program mode.');
+    });
+    [['setArrowSend', 'arrowSend'], ['setFollow', 'follow']].forEach(function (pair) {
       $(pair[0]).addEventListener('change', function (e) {
         state.settings[pair[1]] = e.target.checked;
         store.set('settings', state.settings);

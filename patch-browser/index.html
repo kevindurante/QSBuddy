@@ -83,18 +83,25 @@
   <dialog id="settingsDialog" class="dialog wide">
     <form method="dialog">
       <h2>Settings</h2>
-      <label class="check"><input type="checkbox" id="setProgramMode"> Switch the QS to Program mode before changing patches</label>
       <label class="check"><input type="checkbox" id="setArrowSend"> Send patches while moving with the arrow keys</label>
       <label class="check"><input type="checkbox" id="setFollow"> Follow program changes made on the QS front panel</label>
 
       <h3>Setting up the QS</h3>
       <ol class="setup">
         <li>Connect a MIDI cable from your interface's <b>Out</b> to the QS <b>MIDI In</b>. To read names from the QS, also connect the QS <b>MIDI Out</b> to your interface's <b>In</b>.</li>
-        <li>On the QS press <b>GLOBAL</b> and find the MIDI page: set <b>Prog Select</b> to <b>On</b> (or to the channel you pick here) and <b>General MIDI</b> to <b>Off</b>. With Prog Select off the QS ignores program changes; with General MIDI on it ignores bank changes.</li>
+        <li>On the QS press <b>PROGRAM</b>, then <b>GLOBAL</b>, and find the MIDI page: set <b>MIDI Program Select</b> (PrgSl) to <b>On</b> (or to the channel you pick here) and <b>General MIDI</b> to <b>Off</b>. With Program Select off the QS ignores program changes; with General MIDI on it ignores bank changes.</li>
         <li>Set the channel here to the QS's Program mode channel (channel 1 unless you changed it).</li>
         <li>Close any DAW or other app that has the MIDI ports open. On Windows only one app can use a MIDI port at a time.</li>
       </ol>
       <p class="muted">Library patches go to the QS edit buffer only, so your User bank isn't touched until you press STORE on the QS or use "Store to User…" here.</p>
+
+      <h3>Patches not changing?</h3>
+      <p class="muted">The test switches programs on the QS, reads back what happened, then returns to the patch you last picked here. It needs the QS MIDI Out connected as well.</p>
+      <div class="diag-actions">
+        <button type="button" class="btn" id="runDiag">Test the connection</button>
+        <button type="button" class="btn" id="programModeBtn">Put the QS in Program mode</button>
+      </div>
+      <ol class="diag" id="diagResults" aria-live="polite"></ol>
 
       <h3>Saved data</h3>
       <p class="muted">Names read from the QS, card choices and favorites are saved in this browser.</p>

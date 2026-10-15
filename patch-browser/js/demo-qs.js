@@ -14,6 +14,10 @@
     var input = { id: 'demo-in', name: 'QS7 (demo)', manufacturer: 'QSBuddy', state: 'connected', onmidimessage: null };
     var output = { id: 'demo-out', name: 'QS7 (demo)', manufacturer: 'QSBuddy', state: 'connected' };
     var synth = { bank: 1, program: 0, user: {}, edit: null };
+    // ?demo&progsel=off acts like a QS with MIDI Program Select turned off.
+    var ignoreProgramChanges = /[?&]progsel=off\b/.test(location.search);
+    // ?demo&sysex=off acts like a MIDI chain that only forwards channel messages.
+    var dropSysex = /[?&]sysex=off\b/.test(location.search);
 
     function reply(bytes) {
       setTimeout(function () {
@@ -35,7 +39,9 @@
 
     output.send = function (bytes) {
       bytes = Uint8Array.from(bytes);
+      if (dropSysex && bytes[0] === 0xF0) return;
       var status = bytes[0] & 0xF0;
+      if (ignoreProgramChanges && (status === 0xC0 || (status === 0xB0 && bytes[1] === 0))) return;
       if (status === 0xB0 && bytes[1] === 0) { synth.bank = bytes[2]; return; }
       if (status === 0xC0) {
         synth.program = bytes[1];
