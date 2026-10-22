@@ -129,3 +129,27 @@ test('generated library matches the source banks', () => {
   assert.strictEqual(r8.names[0], 'ClubQuadra');
   assert.strictEqual(r8.names[1], 'AmberTranz');
 });
+
+// The library is built by Python; the app parses opened files with QS.parseBank.
+// Both must agree byte for byte. (Zip sources are skipped: Node has no unzip.)
+test('library banks match QS.parseBank of their source files', () => {
+  const banks = loadIndex().collections.flatMap((c) => c.banks).filter((b) => !b.source.includes('::'));
+  assert.ok(banks.length >= 60);
+  const zero = (n) => new Uint8Array(n);
+  for (const b of banks) {
+    const parsed = QS.parseBank(new Uint8Array(fs.readFileSync(path.join(REPO, b.source))));
+    const file = loadBankFile(b.id);
+    const progs = Buffer.from(file.p, 'base64');
+    const fx = Buffer.from(file.e, 'base64');
+    assert.strictEqual(fx.length, 128 * 65);
+    for (let i = 0; i < 128; i++) {
+      assert.deepStrictEqual(new Uint8Array(progs.subarray(i * 350, (i + 1) * 350)),
+        parsed.programs[i] || zero(350), `${b.id} program #${i}`);
+      assert.strictEqual(file.hasFx[i], parsed.effects[i] ? 1 : 0, `${b.id} hasFx #${i}`);
+      assert.deepStrictEqual(new Uint8Array(fx.subarray(i * 65, (i + 1) * 65)),
+        parsed.effects[i] || zero(65), `${b.id} effect #${i}`);
+    }
+  }
+  // drum1.syx has a one-byte-short effect #71: it's skipped, and #72 on stay aligned.
+  assert.strictEqual(loadBankFile('cat-drum1').hasFx[71], 0);
+});
