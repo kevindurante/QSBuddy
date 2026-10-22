@@ -25,16 +25,17 @@ function syxFiles(dir, out = []) {
   return out;
 }
 
-function libraryPrograms() {
+function libraryDumps() {
   const ctx = { window: {} };
   vm.runInNewContext(fs.readFileSync(path.join(REPO, 'app', 'library', 'index.js'), 'utf8'), ctx);
   const out = [];
   for (const b of ctx.window.QSLIB_INDEX.collections.flatMap((c) => c.banks)) {
-    let progs = null;
-    const QSLIB = { addBank: (id, p) => { progs = Buffer.from(p, 'base64'); } };
+    let progs = null, fx = null, hasFx = null;
+    const QSLIB = { addBank: (id, p, e, h) => { progs = Buffer.from(p, 'base64'); fx = Buffer.from(e, 'base64'); hasFx = h; } };
     vm.runInNewContext(fs.readFileSync(path.join(REPO, 'app', 'library', 'banks', b.id + '.js'), 'utf8'), { QSLIB });
     b.names.forEach((name, i) => {
-      if (name !== null) out.push({ data: new Uint8Array(progs.subarray(i * 350, (i + 1) * 350)), where: 'library ' + b.id + ' #' + i });
+      if (name !== null) out.push({ kind: 'program', data: new Uint8Array(progs.subarray(i * 350, (i + 1) * 350)), where: 'library ' + b.id + ' #' + i });
+      if (hasFx[i]) out.push({ kind: 'effect', data: new Uint8Array(fx.subarray(i * 65, (i + 1) * 65)), where: 'library ' + b.id + ' effect #' + i });
     });
   }
   return out;
@@ -42,10 +43,9 @@ function libraryPrograms() {
 
 /*
  * Every program, effect, new mix and global dump in archive/**.syx,
- * deduplicated by content, each with where it was first seen. Programs from
- * the bundled library are added too, since some banks only exist inside zips.
- * (Library effects are left out: tools/build_library.py doesn't pad short
- * effect dumps, so cat-drum1's effects after #71 are shifted by a byte.)
+ * deduplicated by content, each with where it was first seen. Programs and
+ * effects from the bundled library are added too, since some banks only
+ * exist inside zips.
  */
 const DUMPS = (() => {
   const maps = { program: new Map(), effect: new Map(), newMix: new Map(), global: new Map() };
@@ -75,7 +75,7 @@ const DUMPS = (() => {
       add(OP_KIND[p.op], p.data, rel + ' op ' + p.op.toString(16).padStart(2, '0') + ' #' + p.num);
     }
   }
-  for (const { data, where } of libraryPrograms()) add('program', data, where);
+  for (const { kind, data, where } of libraryDumps()) add(kind, data, where);
   const out = { stats };
   for (const k of KINDS) out[k] = [...maps[k].values()];
   return out;
