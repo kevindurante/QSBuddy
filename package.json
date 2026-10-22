@@ -7,6 +7,7 @@
   "scripts": {
     "test": "node --test tests/*.test.js",
     "build:library": "python tools/build_library.py",
+    "build:params": "python tools/gen_params.py",
     "serve": "python tools/serve.py"
   },
   "engines": {
