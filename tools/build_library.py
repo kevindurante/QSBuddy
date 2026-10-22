@@ -233,12 +233,14 @@ def parse_bank(data):
     for m in split_sysex(data):
         if m[1:5] != b'\x00\x00\x0e\x0e' or len(m) < 8:
             continue
-        op, num, body = m[5], m[6] & 0x7F, m[7:-1]
-        if op == 0x00:
-            programs[num] = unpack(body)[:PROGRAM_SIZE]
+        op, num, body = m[5], m[6] & 0x7F, unpack(m[7:-1])
+        # Short dumps are skipped: a dropped MIDI byte can be anywhere in the
+        # message, so padding would misplace every field after it.
+        if op == 0x00 and len(body) >= PROGRAM_SIZE:
+            programs[num] = body[:PROGRAM_SIZE]
             seq.append(('p', num, None))
-        elif op == 0x06:
-            seq.append(('e', num, unpack(body)[:EFFECT_SIZE]))
+        elif op == 0x06 and len(body) >= EFFECT_SIZE:
+            seq.append(('e', num, body[:EFFECT_SIZE]))
     interleaved = len(seq) > 1 and all(
         i + 1 < len(seq) and seq[i + 1][0] == 'e' for i, s in enumerate(seq) if s[0] == 'p')
     for i, (kind, num, payload) in enumerate(seq):
