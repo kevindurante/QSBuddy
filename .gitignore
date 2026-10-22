@@ -1,0 +1,14 @@
+# Claude Code local state
+.claude/worktrees/
+.claude/settings.local.json
+.claude/launch.json
+
+# Tooling
+node_modules/
+__pycache__/
+*.pyc
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini
