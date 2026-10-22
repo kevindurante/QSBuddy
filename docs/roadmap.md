@@ -12,13 +12,12 @@ Goal: a complete software editor and librarian for the Alesis QS family (QS6, QS
 
 ## 1. Complete parameter model
 
-The foundation for every editor page.
+The foundation for every editor page. Mostly done; see [Parameter model](architecture.md#parameter-model).
 
-- Turn every table in `docs/spec/QS678R-sysex-spec.txt` into machine-readable definitions: Program common, Keyboard sound, Drum sound (10 drums), Effects (all five configurations, with their conditional parameters), New Mix (16 channels), Global.
-- Ideally generate them with a script from the spec text and check the result in, so each entry still traces back to a spec line.
-- Each entry: name, bit address, offset, limit, display format (note names, pan, on/off, enumerations), and func/sound/page/pot for opcode `10H`.
-- Tests: decode then re-encode all 8,600+ programs, effects and mixes in `archive/` byte-identically; every field stays within its limit.
-- Enumerations the spec doesn't spell out: sample group and sample names, mod sources and destinations, LFO waveforms, reverb types. The QS7/QS8 Reference Manual has these lists; it isn't in the archive yet, so add it under `docs/` first.
+- Done: every table in the spec as generated definitions (`tools/gen_params.py` → `app/js/qs-paramdefs.js`), each traced to its spec line, with the spec's errata as explicit overrides.
+- Done: decode/encode of whole dumps; every unique program, effect, new mix and global dump in `archive/` round-trips byte-identically. Fields above their spec limit are listed and explained in the tests.
+- Left: enumerations the spec doesn't spell out (sample group and sample names, mod sources and destinations, LFO waveforms, reverb types, mix program types). The QS7/QS8 Reference Manual has these lists; it isn't in the archive yet, so add it under `docs/` first.
+- Left: check on hardware the limits that look wrong in the spec, and configuration 4's overdrive rows, which clash with the Lezlie mix and the EQ.
 
 ## 2. Program editor
 

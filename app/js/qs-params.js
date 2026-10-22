@@ -1,55 +1,25 @@
 /*
- * qs-params.js — program parameter map (read side).
+ * qs-params.js — decode and encode QS dumps field by field.
  *
- * Addresses, limits and offsets are copied verbatim from the PROGRAM DATA
- * FORMAT tables in docs/spec/QS678R-sysex-spec.txt so they can be
- * checked line-by-line against the spec. func/page/pot are the opcode 10H
- * coordinates a future editor needs to send live edits.
+ * The field definitions live in qs-paramdefs.js, generated from
+ * docs/spec/QS678R-sysex-spec.txt by tools/gen_params.py. This file turns a
+ * dump into a flat list of fields and back:
  *
- * Only the parameters the browser's inspector shows are listed for now;
- * extend these tables to grow the editor.
+ *   QS.decodeParams(kind, data)    kind: 'program' | 'effect' | 'newMix' | 'global'
+ *   QS.encodeParams(kind, fields)  a fresh dump built only from the fields' raw values
+ *
+ * Every bit of a dump belongs to some field; bits the spec doesn't list
+ * become "unlisted" fields, so decode then encode is byte-identical.
+ *
+ * QS.decodeProgram / QS.decodeEffect are the inspector's summaries, built on
+ * top of the same fields.
  */
 (function (QS) {
   'use strict';
 
-  // name, address, offset (add to raw value for display), limit (raw max), func, page, pot
-  function P(name, addr, offset, limit, func, page, pot) {
-    return { name: name, addr: addr, offset: offset, limit: limit, func: func, page: page, pot: pot };
-  }
-
-  var KEYBOARD_SOUND = {
-    mode:        P('Keyboard / drum mode', '0:0', 0, 1, 16, 0, 0),
-    sampleGroup: P('Sample group', '0:6-0:1', 0, 47, 0, 0, 0),
-    sampleNum:   P('Sample number', '1:5-0:7', 0, 127, 0, 0, 2),
-    volume:      P('Sound volume', '2:4-1:6', 0, 99, 1, 0, 0),
-    pan:         P('Sound pan', '2:7-2:5', 0, 6, 1, 0, 1),
-    output:      P('Sound output', '3:1-3:0', 0, 2, 1, 0, 2),
-    fxLevel:     P('Sound effect level', '4:0-3:2', 0, 99, 2, 0, 0),
-    fxBus:       P('Sound effect bus', '4:2-4:1', 0, 3, 2, 0, 1),
-    semitone:    P('Sound pitch semitone', '5:0-4:3', -24, 49, 3, 0, 0),
-    detune:      P('Sound pitch detune', '6:0-5:1', -99, 199, 3, 0, 2),
-    filterFreq:  P('Sound filter frequency', '11:7-11:1', 0, 99, 4, 0, 0),
-    lowNote:     P('Sound low note limit', '20:3-19:5', 0, 127, 6, 0, 0),
-    highNote:    P('Sound high note limit', '21:2-20:4', 0, 127, 6, 0, 1),
-    ampAttack:   P('Sound amp env attack', '68:2-67:4', 0, 99, 14, 0, 0),
-    ampDecay:    P('Sound amp env decay', '69:1-68:3', 0, 99, 14, 0, 1),
-    ampSustain:  P('Sound amp env sustain', '70:0-69:2', 0, 99, 14, 0, 2),
-    ampRelease:  P('Sound amp env release', '70:7-70:1', 0, 99, 14, 0, 3),
-    enable:      P('Sound enable', '84:3', 0, 1, 16, 0, 3)
-  };
-
-  var DRUM_SOUND = {
-    mode:   P('Keyboard / drum mode', '0:0', 0, 1, 9, 0, 0),
-    enable: P('Sound enable', '81:0', 0, 1, 9, 0, 3)
-  };
-
-  // Drum n (0-9) parameters repeat every 8 bytes starting at 1:0.
-  var DRUM = {
-    sampleGroup: P('Drum sample group', '1:3-1:0', 0, 15, 0, 0, 0),
-    sampleNum:   P('Drum sample number', '2:2-1:4', 0, 127, 0, 0, 2),
-    volume:      P('Drum volume', '2:7-2:3', 0, 31, 1, 0, 0),
-    note:        P('Drum note number', '7:3-6:5', 0, 127, 6, 0, 0)
-  };
+  var DEFS = QS.PARAMDEFS;
+  var TABLES = { global: DEFS.global, newMix: DEFS.newMix, program: DEFS.program, effect: DEFS.effect };
+  var MODE_ADDR = DEFS.keyboardSound.params[0].addr; // keyboard / drum mode, same bit in both sound types
 
   var EFFECT_CONFIGS = [
     '4 sends, 1 reverb',
@@ -59,53 +29,235 @@
     'Overdrive, chorus, delay, reverb, Leslie'
   ];
 
-  function read(data, param, base) {
-    return QS.getBits(data, param.addr, base) + param.offset;
+  function byId(params) {
+    var m = {};
+    params.forEach(function (p) { if (!p.when) m[p.id] = p; });
+    return m;
+  }
+  var EFFECT_CONFIG_DEF = byId(DEFS.effect.params).effectConfiguration;
+  var CONFIG_IDS = DEFS.effect.configs.map(function (c) { return byId(c.params); });
+
+  // Parsed bit addresses, cached per definition.
+  var SPANS = typeof Map === 'function' ? new Map() : null;
+  function span(def) {
+    var a = SPANS && SPANS.get(def);
+    if (!a) {
+      a = QS.parseAddress(def.addr);
+      if (SPANS) SPANS.set(def, a);
+    }
+    return a;
   }
 
-  function decodeSound(data, index) {
-    var base = QS.SOUND_OFFSETS[index];
-    var isDrum = QS.getBits(data, '0:0', base) === 1;
-    if (isDrum) {
-      var drums = [];
-      for (var d = 0; d < 10; d++) {
-        var db = base + d * 8; // each drum is 8 bytes (64 bits) further on
-        drums.push({
-          sampleGroup: read(data, DRUM.sampleGroup, db),
-          sampleNum: read(data, DRUM.sampleNum, db),
-          volume: read(data, DRUM.volume, db),
-          note: read(data, DRUM.note, db)
-        });
-      }
-      return { index: index, type: 'drum', enabled: read(data, DRUM_SOUND.enable, base) === 1, drums: drums };
+  function fmtAddr(hi, lo) {
+    var a = (hi >> 3) + ':' + (hi & 7);
+    return hi === lo ? a : a + '-' + (lo >> 3) + ':' + (lo & 7);
+  }
+
+  /*
+   * The fields of one dump, in spec order. Each is
+   *   { key, def, base, table, sound?, drum?, channel? }
+   * where key is unique in the dump ("s2.pan", "s1.drum3.noteNumber",
+   * "ch5.volume", "send1PitchType") and base is the byte offset to add to
+   * def.addr. Which fields exist depends on the data: each sound's keyboard /
+   * drum bit, and the effect configuration and type fields.
+   */
+  function layout(kind, data) {
+    var t = TABLES[kind];
+    if (!t) throw new Error('Unknown dump kind: ' + kind);
+    var out = [];
+    function add(defs, base, prefix, table, extra) {
+      defs.forEach(function (d) {
+        var f = { key: prefix + d.id, def: d, base: base, table: table };
+        for (var k in extra) f[k] = extra[k];
+        out.push(f);
+      });
     }
-    var s = { index: index, type: 'keyboard' };
-    Object.keys(KEYBOARD_SOUND).forEach(function (k) { s[k] = read(data, KEYBOARD_SOUND[k], base); });
-    s.enabled = s.enable === 1;
-    return s;
+    add(t.params, 0, '', kind);
+    if (kind === 'newMix') {
+      for (var c = 0; c < t.channel.count; c++) {
+        add(t.channel.params, c * t.channel.stride, 'ch' + (c + 1) + '.', 'newMix.channel', { channel: c });
+      }
+    } else if (kind === 'program') {
+      t.soundOffsets.forEach(function (base, s) {
+        var pre = 's' + (s + 1) + '.';
+        if (QS.getBits(data, MODE_ADDR, base) === 1) {
+          add(DEFS.drumSound.params, base, pre, 'drumSound', { sound: s });
+          var dr = DEFS.drumSound.drum;
+          for (var d = 0; d < dr.count; d++) {
+            add(dr.params, base + d * dr.stride, pre + 'drum' + (d + 1) + '.', 'drumSound.drum', { sound: s, drum: d });
+          }
+        } else {
+          add(DEFS.keyboardSound.params, base, pre, 'keyboardSound', { sound: s });
+        }
+      });
+    } else if (kind === 'effect') {
+      var n = QS.getBits(data, EFFECT_CONFIG_DEF.addr);
+      var cfg = t.configs[n];
+      if (cfg) {
+        var ids = CONFIG_IDS[n];
+        add(cfg.params.filter(function (d) {
+          return !d.when || d.when.in.indexOf(QS.getBits(data, span(ids[d.when.id]))) >= 0;
+        }), 0, '', 'effect.config' + n);
+      }
+    }
+    return out.concat(unlisted(out, t.size));
+  }
+
+  // Fields for every run of bits no definition covers, one per byte.
+  function unlisted(fields, size) {
+    var covered = new Uint8Array(size * 8);
+    fields.forEach(function (f) {
+      var a = span(f.def);
+      for (var b = a.lo; b <= a.hi; b++) covered[b + f.base * 8] = 1;
+    });
+    var out = [];
+    for (var b = 0; b < covered.length; b++) {
+      if (covered[b]) continue;
+      var top = b;
+      while (top + 1 < covered.length && !covered[top + 1] && (top + 1) % 8 !== 0) top++;
+      var addr = fmtAddr(top, b);
+      out.push({
+        key: 'unlisted@' + addr, base: 0, table: 'unlisted',
+        def: {
+          id: 'unlisted@' + addr, name: 'Unlisted bits', addr: addr, bits: top - b + 1, offset: 0, limit: null,
+          func: null, page: null, pot: null, display: 'number', unlisted: true
+        }
+      });
+      b = top;
+    }
+    return out;
+  }
+
+  function decodeParams(kind, data) {
+    var fields = layout(kind, data);
+    var values = {};
+    fields.forEach(function (f) {
+      f.raw = QS.getBits(data, span(f.def), f.base);
+      f.value = paramValue(f.def, f.raw);
+      values[f.key] = f.value;
+    });
+    return { kind: kind, fields: fields, values: values };
+  }
+
+  function encodeParams(kind, fields) {
+    var data = new Uint8Array(TABLES[kind].size);
+    fields.forEach(function (f) { QS.setBits(data, span(f.def), f.raw, f.base); });
+    return data;
+  }
+
+  /* ---------------- values ----------------
+   * Most signed fields are offset binary (value = raw + offset). Global
+   * signed fields and the Lezlie horn are two's complement (def.twos).
+   */
+  function paramValue(def, raw) {
+    if (def.twos) return raw & (1 << (def.bits - 1)) ? raw - (1 << def.bits) : raw;
+    return raw + (def.offset || 0);
+  }
+
+  function paramRaw(def, value) {
+    if (def.twos) return value & ((1 << def.bits) - 1);
+    return value - (def.offset || 0);
+  }
+
+  // [min, max] in value terms, or null where the spec gives no limit.
+  function paramRange(def) {
+    if (def.twos) return [def.min, def.max];
+    if (def.limit === null || def.limit === undefined) return null;
+    return [def.offset, def.offset + def.limit];
+  }
+
+  function paramInRange(def, raw) {
+    var r = paramRange(def);
+    if (!r) return true;
+    var v = paramValue(def, raw);
+    return v >= r[0] && v <= r[1];
+  }
+
+  function formatParam(def, raw) {
+    var v = paramValue(def, raw);
+    switch (def.display) {
+      case 'note': return QS.noteName(v);
+      case 'onoff': return v ? 'On' : 'Off';
+      case 'char': return QS.charFromCode(v);
+      case 'signed': return (v > 0 ? '+' : '') + v;
+      case 'enum': {
+        var label = def.options && def.options[raw];
+        if (!label) return String(raw);
+        var shared = def.options.indexOf(label) !== def.options.lastIndexOf(label);
+        return shared ? label + ' (' + raw + ')' : label;
+      }
+      default: return String(v);
+    }
+  }
+
+  /*
+   * Opcode 10H message that sets one decoded field to value (in value terms,
+   * e.g. -5 for a detune of -5). Returns null for fields the spec gives no
+   * func/page/pot. opts.channel: MIDI channel 0-15 in Mix mode.
+   * opts.drum: the addressed sound is a drum (program name digits then use
+   * func 7). Drum fields edit the drum selected with drumNumber (pot 3).
+   */
+  function paramEditFor(kind, field, value, opts) {
+    var d = field.def;
+    opts = opts || {};
+    if (d.func === null || d.page === null || d.pot === null) return null;
+    var func = opts.drum && d.drumFunc !== undefined ? d.drumFunc : d.func;
+    var sound = kind === 'effect' ? (d.send || 0) : (opts.sound !== undefined ? opts.sound : field.sound || 0);
+    return QS.build.paramEdit(TABLES[kind].mode, func, sound, d.page, opts.channel || 0, d.pot, value);
+  }
+
+  /* ---------------- inspector summaries ---------------- */
+  // Inspector keys -> keyboard sound ids.
+  var KEYBOARD_SUMMARY = {
+    mode: 'keyboardDrumMode', sampleGroup: 'sampleGroup', sampleNum: 'sampleNumber', volume: 'volume', pan: 'pan',
+    output: 'output', fxLevel: 'effectLevel', fxBus: 'effectBus', semitone: 'pitchSemitone', detune: 'pitchDetune',
+    filterFreq: 'filterFrequency', lowNote: 'lowNoteLimit', highNote: 'highNoteLimit', ampAttack: 'ampEnvAttack',
+    ampDecay: 'ampEnvDecay', ampSustain: 'ampEnvSustain', ampRelease: 'ampEnvRelease', enable: 'enable'
+  };
+  var DRUM_SUMMARY = { sampleGroup: 'sampleGroup', sampleNum: 'sampleNumber', volume: 'volume', note: 'noteNumber' };
+
+  function pick(values, prefix, map) {
+    var o = {};
+    Object.keys(map).forEach(function (k) { o[k] = values[prefix + map[k]]; });
+    return o;
   }
 
   function decodeProgram(data) {
-    return {
-      name: QS.programName(data),
-      romId: QS.romId(data),
-      sounds: [0, 1, 2, 3].map(function (i) { return decodeSound(data, i); })
-    };
+    var params = decodeParams('program', data);
+    var v = params.values;
+    var sounds = DEFS.program.soundOffsets.map(function (_, i) {
+      var pre = 's' + (i + 1) + '.';
+      if (v[pre + 'keyboardDrumMode'] === 1) {
+        var drums = [];
+        for (var d = 0; d < DEFS.drumSound.drum.count; d++) drums.push(pick(v, pre + 'drum' + (d + 1) + '.', DRUM_SUMMARY));
+        return { index: i, type: 'drum', enabled: v[pre + 'enable'] === 1, drums: drums };
+      }
+      var s = pick(v, pre, KEYBOARD_SUMMARY);
+      s.index = i;
+      s.type = 'keyboard';
+      s.enabled = s.enable === 1;
+      return s;
+    });
+    return { name: QS.programName(data), romId: v.romIdentifier, sounds: sounds, params: params };
   }
 
   function decodeEffect(data) {
-    var config = QS.getBits(data, '9:1-8:6');
-    return { config: config, configName: EFFECT_CONFIGS[config] || ('Config ' + config) };
+    var params = decodeParams('effect', data);
+    var config = params.values.effectConfiguration;
+    return { config: config, configName: EFFECT_CONFIGS[config] || ('Config ' + config), params: params };
   }
 
-  QS.params = {
-    KEYBOARD_SOUND: KEYBOARD_SOUND,
-    DRUM_SOUND: DRUM_SOUND,
-    DRUM: DRUM,
-    EFFECT_CONFIGS: EFFECT_CONFIGS
-  };
+  QS.EFFECT_CONFIGS = EFFECT_CONFIGS;
+  QS.decodeParams = decodeParams;
+  QS.encodeParams = encodeParams;
+  QS.paramValue = paramValue;
+  QS.paramRaw = paramRaw;
+  QS.paramRange = paramRange;
+  QS.paramInRange = paramInRange;
+  QS.formatParam = formatParam;
+  QS.paramEditFor = paramEditFor;
   QS.decodeProgram = decodeProgram;
   QS.decodeEffect = decodeEffect;
 })(typeof module !== 'undefined' && module.exports
-  ? (module.exports = require('./qs-sysex.js'))
+  ? (module.exports = require('./qs-paramdefs.js'))
   : (window.QS = window.QS || {}));

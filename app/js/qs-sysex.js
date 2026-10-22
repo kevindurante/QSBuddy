@@ -324,6 +324,8 @@
   QS.parseAddress = parseAddress;
   QS.getBits = getBits;
   QS.setBits = setBits;
+  QS.charFromCode = charFromCode;
+  QS.codeFromChar = codeFromChar;
   QS.programName = programName;
   QS.setProgramName = setProgramName;
   QS.mixName = mixName;
