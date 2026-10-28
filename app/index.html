@@ -36,7 +36,7 @@
   <div class="layout">
     <nav class="sidebar" id="sidebar" aria-label="Banks"></nav>
 
-    <main class="main">
+    <main class="main" id="main">
       <div class="toolbar">
         <div class="bank-heading">
           <h1 id="bankTitle">&nbsp;</h1>
@@ -50,6 +50,7 @@
       <div class="notice" id="notice" hidden></div>
       <div class="grid" id="grid" role="listbox" aria-label="Programs" tabindex="0"></div>
       <div class="results" id="results" role="listbox" aria-label="Search results" hidden></div>
+      <section class="editor" id="editor" aria-label="Program editor" hidden></section>
     </main>
 
     <aside class="inspector" id="inspector" aria-label="Program details">
@@ -116,9 +117,11 @@
   <script src="js/qs-sysex.js"></script>
   <script src="js/qs-paramdefs.js"></script>
   <script src="js/qs-params.js"></script>
+  <script src="js/qs-edit.js"></script>
   <script src="js/library.js"></script>
   <script src="library/index.js"></script>
   <script src="js/midi.js"></script>
+  <script src="js/editor.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -11,6 +11,9 @@
  * Every bit of a dump belongs to some field; bits the spec doesn't list
  * become "unlisted" fields, so decode then encode is byte-identical.
  *
+ *   QS.paramEditFor(kind, field, value, opts)  opcode 10H message for one field
+ *   QS.applyParamEdit(kind, data, msg)         the reverse, as the QS does it (the demo QS uses it)
+ *
  * QS.decodeProgram / QS.decodeEffect are the inspector's summaries, built on
  * top of the same fields.
  */
@@ -20,6 +23,7 @@
   var DEFS = QS.PARAMDEFS;
   var TABLES = { global: DEFS.global, newMix: DEFS.newMix, program: DEFS.program, effect: DEFS.effect };
   var MODE_ADDR = DEFS.keyboardSound.params[0].addr; // keyboard / drum mode, same bit in both sound types
+  var DRUM_NUMBER_DEF = DEFS.drumSound.params.filter(function (d) { return d.id === 'drumNumber'; })[0];
 
   var EFFECT_CONFIGS = [
     '4 sends, 1 reverb',
@@ -62,6 +66,12 @@
    * drum bit, and the effect configuration and type fields.
    */
   function layout(kind, data) {
+    var out = listed(kind, data);
+    return out.concat(unlisted(out, TABLES[kind].size));
+  }
+
+  // The defined fields alone, without the unlisted bits.
+  function listed(kind, data) {
     var t = TABLES[kind];
     if (!t) throw new Error('Unknown dump kind: ' + kind);
     var out = [];
@@ -100,7 +110,7 @@
         }), 0, '', 'effect.config' + n);
       }
     }
-    return out.concat(unlisted(out, t.size));
+    return out;
   }
 
   // Fields for every run of bits no definition covers, one per byte.
@@ -206,6 +216,71 @@
     return QS.build.paramEdit(TABLES[kind].mode, func, sound, d.page, opts.channel || 0, d.pot, value);
   }
 
+  /*
+   * The parts of an opcode 10H message: { mode, func, sound, page, channel,
+   * pot, value }, value sign-extended from 8-bit two's complement. null for
+   * anything else.
+   */
+  function parseParamEdit(msg) {
+    if (msg.length < 11 || msg[0] !== 0xF0 || msg[1] !== 0 || msg[2] !== 0 || msg[3] !== 0x0E || msg[4] !== 0x0E ||
+        msg[5] !== QS.OP.PARAM_EDIT) return null;
+    var v = ((msg[8] & 1) << 7) | (msg[9] & 0x7F);
+    return {
+      mode: (msg[6] >> 5) & 3, func: msg[6] & 31, sound: (msg[7] >> 5) & 3, page: msg[7] & 31,
+      channel: (msg[8] >> 3) & 15, pot: (msg[8] >> 1) & 3, value: v & 0x80 ? v - 256 : v
+    };
+  }
+
+  /*
+   * The field of data that a parsed 10H edit addresses, as the QS would pick
+   * it: the sound's keyboard / drum mode decides its table (and func 7 or 8
+   * for the name), drum fields go to the drum selected with drumNumber, and
+   * effects match on send. Spare fields never match. Where the spec gives two
+   * fields the same coordinates (configuration 4's overdrive rows), the first
+   * in spec order wins. null when nothing matches, which on the QS means
+   * "no edit".
+   */
+  function fieldForEdit(kind, data, e) {
+    var fields = listed(kind, data);
+    for (var i = 0; i < fields.length; i++) {
+      var f = fields[i];
+      var d = f.def;
+      if (d.spare || d.func === null || d.page !== e.page || d.pot !== e.pot) continue;
+      var func = d.func;
+      if (kind === 'program') {
+        var s = f.sound !== undefined ? f.sound : e.sound;
+        if (s !== e.sound) continue;
+        var base = DEFS.program.soundOffsets[s];
+        if (f.sound === undefined && d.drumFunc !== undefined && QS.getBits(data, MODE_ADDR, base) === 1) func = d.drumFunc;
+        if (f.drum !== undefined && f.drum !== QS.getBits(data, span(DRUM_NUMBER_DEF), base)) continue;
+      } else if (kind === 'effect') {
+        if ((d.send || 0) !== e.sound) continue;
+      } else if (f.channel !== undefined && f.channel !== e.channel) {
+        continue;
+      }
+      if (d.funcs ? d.funcs.indexOf(e.func) >= 0 : func === e.func) return f;
+    }
+    return null;
+  }
+
+  /*
+   * Applies a 10H message to a dump in place, the way the QS edits its buffer:
+   * the value is limited to the field's spec range. Returns { key, value }
+   * for the field it changed, or null when the message isn't for this kind
+   * of dump or addresses nothing.
+   */
+  function applyParamEdit(kind, data, msg) {
+    var e = parseParamEdit(msg);
+    if (!e || !TABLES[kind] || e.mode !== TABLES[kind].mode) return null;
+    var f = fieldForEdit(kind, data, e);
+    if (!f) return null;
+    var v = e.value;
+    var r = paramRange(f.def);
+    if (r) v = Math.max(r[0], Math.min(r[1], v));
+    QS.setBits(data, span(f.def), paramRaw(f.def, v), f.base);
+    return { key: f.key, value: v };
+  }
+
   /* ---------------- inspector summaries ---------------- */
   // Inspector keys -> keyboard sound ids.
   var KEYBOARD_SUMMARY = {
@@ -256,6 +331,9 @@
   QS.paramInRange = paramInRange;
   QS.formatParam = formatParam;
   QS.paramEditFor = paramEditFor;
+  QS.parseParamEdit = parseParamEdit;
+  QS.fieldForEdit = fieldForEdit;
+  QS.applyParamEdit = applyParamEdit;
   QS.decodeProgram = decodeProgram;
   QS.decodeEffect = decodeEffect;
 })(typeof module !== 'undefined' && module.exports
