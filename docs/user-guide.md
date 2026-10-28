@@ -1,12 +1,13 @@
 # QSBuddy user guide
 
-QSBuddy runs in Chrome or Edge and talks to an Alesis QS6 / QS7 / QS8 / QSR over Web MIDI. Today it's a patch browser and librarian; the program, effects and mix editors are on the [roadmap](roadmap.md).
+QSBuddy runs in Chrome or Edge and talks to an Alesis QS6 / QS7 / QS8 / QSR over Web MIDI. It's a patch browser and librarian with a program editor; the mix editor and the rest are on the [roadmap](roadmap.md).
 
 - **Browse the QS itself.** User, Preset 1–3, GenMIDI and both card banks, with real names. Click a program (or move with the arrow keys) and the QS switches to it.
 - **Audition the whole archive.** 68 banks / 8,600+ programs from this repo (Factory, Expando, Q-Card extra banks, category banks, QEssence, Koltsov, Sam's…). A click loads the program and its effect into the QS **edit buffer**, so your User bank isn't touched.
 - **Search everything at once**, keep favorites, open or drop any `.syx` file, store a program into a User slot, and save single programs as `.syx`.
 - **Read names from the QS** to see what's really in your User bank or an inserted card. Card names for Z1–Z9, R1, R2 and R8 come from the card images in `archive/`.
 - **See what's inside a program**: the four sounds (keys or drums, sample, key range, level, pan, tuning, filter, amp envelope, FX send) and the effect configuration.
+- **Edit programs from the computer**: every parameter of the four sounds, the drums and the effect, sent to the QS as you move the controls.
 
 ## Quick start
 
@@ -67,9 +68,21 @@ Bank Select and Program Change are ordinary channel messages, so they get throug
 - **Koltsov** and the other QuadraSynth banks are QuadraSynth / S4 Plus programs. The QS remaps their samples on receipt, so some will sound different from the original.
 - Opened files last until you reload the page. Favorites, card choices and names read from the QS are kept in the browser.
 
+## Editing a program
+
+Select a program and press **Edit** in the inspector. QSBuddy makes it the program the QS plays, reads the QS edit buffer and effect back, and opens the editor in place of the grid. Editing needs SysEx both ways, so connect the QS directly (not through a sequencer that drops SysEx) and pick both the Out and the In.
+
+- **Tabs**: Program (name, and each sound's mode and on/off), Sound 1–4 and Effects. A keyboard sound has pages that follow the QS's functions, laid out as the QS's four knobs; a drum sound lists its 10 drums, pick one to edit it. The Effects page shows only what the current configuration and types use.
+- **Every change goes to the QS live** as a parameter edit (SysEx `10H`), which puts the QS in Edit mode. The QS ignores these while its own COMPARE light is on, so press COMPARE on the QS to leave it if edits stop arriving. Changed values are marked, and **Modified** shows next to the name.
+- **Compare** switches the QS between the original and your version (editing pauses while it plays the original). **Revert** throws your changes away. **Resync** sends your whole version again, for instance after the QS played something else. **.syx** saves it as a file.
+- **Store to User…** writes your version and its effect into a User slot. The dialog shows what that slot holds now; the QS has no undo.
+- Until you store, the edit lives only in the QS edit buffer: picking another program on the QS loses it. QSBuddy asks before you leave the editor with unsaved changes.
+- Sample, mod source and destination, waveform and reverb type show as numbers for now; the names come from the QS7 Reference Manual, which isn't in the repo yet. A ⚠ marks a value above the limit in the Alesis spec (several factory sounds do this).
+- With no MIDI In, or if the QS doesn't answer, the editor starts from this browser's copy of the program and says so; the QS may hold something else, and **Resync** makes them match.
+
 ## Known limits
 
-- Effect configurations are named from the spec's list. Program-level effect details (reverb type and so on) aren't shown yet.
+- Effect configurations are named from the spec's list. Effect type names (reverb types and so on) show as numbers.
 - Mixes aren't browsable yet.
 - The QSR has no keyboard, so use the Test button or your controller.
 - Firefox supports Web MIDI only with a site permission add-on and over HTTPS. Use Chrome or Edge.
