@@ -16,16 +16,18 @@ QSBuddy is a static web app in `app/`: plain HTML, CSS and classic `<script>` fi
 | `app/index.html` | The page: top bar, sidebar, grid, inspector and dialogs. |
 | `app/js/qs-sysex.js` | SysEx codec from the spec: 7-in-8 packing, bit fields in spec notation (`"2:5-1:7"`), names, bank parsing, message builders (including opcode `10H` live parameter edits, `QS.build.paramEdit`). Pure functions, no DOM, so it also runs in Node. |
 | `app/js/qs-paramdefs.js` | Every parameter in the spec as data on `QS.PARAMDEFS`: Global, New Mix, Program, Keyboard and Drum sounds, Effects with all five configurations. **Generated** by `tools/gen_params.py`; don't edit by hand. See [Parameter model](#parameter-model). |
-| `app/js/qs-params.js` | Decodes and encodes whole dumps field by field with those definitions (`QS.decodeParams` / `QS.encodeParams`), value conversion, display formatting and `10H` messages for a field. Also the inspector's `decodeProgram` / `decodeEffect`. |
+| `app/js/qs-params.js` | Decodes and encodes whole dumps field by field with those definitions (`QS.decodeParams` / `QS.encodeParams`), value conversion, display formatting, `10H` messages for a field and the reverse (`QS.applyParamEdit`, what the QS does with one). Also the inspector's `decodeProgram` / `decodeEffect`. |
+| `app/js/qs-edit.js` | The program editor's model without the DOM: the edit session (edited copy plus original), the per-parameter throttle and the editor's pages. Loaded by the tests too. See [Program editor](#program-editor). |
+| `app/js/editor.js` | The program editor view: tabs, pages and controls built from the definitions, live sending, Compare / Revert / Resync / Store. |
 | `app/js/midi.js` | Web MIDI wrapper: ports, logging, `request()` with reply matching and timeouts. |
 | `app/js/library.js` | Lazy loader for generated bank files (`<script>` injection, so it works on `file://`). |
-| `app/js/app.js` | The UI: bank model, sending, search, inspector, scans, store, connection test. |
-| `app/js/demo-qs.js` | Pretend QS7 for `?demo`, with `&progsel=off` and `&sysex=off` failure modes. |
+| `app/js/app.js` | The UI: bank model, sending, search, inspector, scans, store, connection test, and opening the editor. |
+| `app/js/demo-qs.js` | Pretend QS7 for `?demo`, with `&progsel=off` and `&sysex=off` failure modes. Answers program and effect requests and applies `10H` edits to its edit buffers, so `?demo` runs the whole editor loop. |
 | `app/library/` | Generated from `archive/` by `tools/build_library.py`. Committed so the app works after a clone. |
 | `tools/build_library.py` | Builds `app/library/` (bank data plus Q-Card program names). Python standard library only. |
 | `tools/gen_params.py` | Builds `app/js/qs-paramdefs.js` from the spec text, with the spec's errata as explicit overrides. `--check` fails if the checked-in file is stale (the tests run it). Python standard library only. |
 | `tools/serve.py` | Serves `app/` on `http://localhost:8765` for browsers that won't give MIDI to `file://` pages. |
-| `tests/` | Node tests (`node:test`, no dependencies) that run the codec and the parameter model against the real bank files. |
+| `tests/` | Node tests (`node:test`, no dependencies) that run the codec, the parameter model and the editor model against the real bank files. |
 | `docs/spec/QS678R-sysex-spec.txt` | QS6/7/8/R MIDI SysEx Specification (Alesis, Feb 1997). The source of truth for every address and opcode. |
 | `archive/` | The original QS archive this repo was forked from. Read-only source material. |
 
@@ -38,6 +40,10 @@ QSBuddy is a static web app in `app/`: plain HTML, CSS and classic `<script>` fi
 | Synth bank (User, Presets, GenMIDI, cards) | Bank Select CC 0 = bank, then Program Change | Channel messages only, so they also work through chains that drop SysEx. An early version sent Mode Select (`0D`) first; it was removed while fixing patch changes on a real QS7 (where the channel setting also turned out to matter), so it's unproven either way. Re-test on hardware before adding SysEx here. |
 | Library or opened file | Edit program dump `02` #0, then edit effect dump `08` #0 | The effect buffer is independent of the program buffer, so both are sent. Debounced 140 ms while arrow-keying. |
 | Store to User | User program dump `00` #n, user effect dump `06` #n | Overwrites the slot. Confirm first. |
+| Open the editor | The program's usual messages (above), then requests `03` #0 and `09` #0 | Reads what the QS really plays. No MIDI In or no reply: starts from this browser's copy, with a warning. |
+| Edit a parameter | `10H` per change, at most every 30 ms per parameter while dragging | A drum parameter first selects its drum (`drumNumber`). Fields without func/page/pot resend `02` / `08` (debounced). |
+| Change a sound's mode, the effect configuration or an effect type | `10H`, then `03` or `09` to read the result back | Without a MIDI In (or no reply) it sends the whole `02` / `08` instead, so the QS matches the screen. |
+| Compare, Revert, Resync | Edit program dump `02` #0 and edit effect dump `08` #0 | Compare sends the original, then the edited version. |
 | Read names | User bank: request `01` #n per slot. Other banks: bank/program change, then request `03` #0 | ~20–25 s per bank; each step waits for its reply. |
 | Connection test | Device inquiry, `03` read-back after a program change and after a `02` dump | Tells "QS setting" apart from "SysEx not arriving". |
 
@@ -116,11 +122,41 @@ The limits test lists every live field (in an enabled sound or channel) above it
 
 Disabled sounds and mix channels often hold leftover values out of range; the test counts those separately and ignores them.
 
+## Program editor
+
+The Edit button in the inspector makes the program the one playing, reads the edit buffer and edit effect back (`03` / `09`) and opens the editor in the main area. `app.js` does the reading (it knows the banks and the fallback data); `editor.js` owns the view from there; `qs-edit.js` holds everything that can be tested without a browser.
+
+### Model (`qs-edit.js`)
+
+- **Edit session.** `QS.createEditSession(program, effect)` keeps the original dumps and edited copies decoded with `QS.decodeParams`. `set(kind, key, value)` writes one field and re-reads every field of that dump (configuration 4 has fields that share bits). `messages(kind, field, value)` gives the `10H` messages for a change. `isModified()` compares the dumps, `revert()` goes back to the original, `commit()` makes the edited version the original after storing, and `adopt(kind, data)` takes what the QS sent back.
+- **Layout changes.** A sound's keyboard / drum mode, the effect configuration and the pitch and delay types decide which fields exist. When `set` changes one of those so the field list differs, it decodes the dump afresh and returns the field as it was, because the `10H` message must address the old layout: switching a keyboard sound to drums is func 16 on the keyboard sound, not func 9 on the drum sound it becomes.
+- **Drums.** Drum parameters edit whichever drum is selected, so `messages` sends `drumNumber` first when the field is on another drum and notes the selection in the edited copy, as the QS would. The selection doesn't count as a modification.
+- **Program name.** Sent through sound 1, one `10H` per changed letter, with func 7 instead of 8 when sound 1 is a drum sound.
+- **Throttle.** `QS.createThrottle(30, send)`: per parameter, the first change goes at once, later ones within 30 ms wait, and only the newest value goes when the wait ends. A drag sends at most one message per parameter every 30 ms and always ends on the final value. Messages are built when they're sent, so a drum select always comes right before its drum's parameter.
+- **Pages.** `QS.KEYBOARD_PAGES` follow the spec's funcs: Sample (0), Level (1, with the effect send, 2), Pitch (3), Filter (4), Amp (5), Range (6), Mod matrix (7), the three LFOs (9–11), the three envelopes (12–14) and Tracking (15). Func 16 (mode, enable) sits in each sound's header and func 8 is the name. `QS.pageRows` lays each page out as one row per QS page with controls in pot order, as on the QS's four knobs. Drums use `QS.DRUM_GROUPS`, one row per func. A test checks that every parameter appears exactly once.
+
+### View (`editor.js`)
+
+- Controls come from the definitions: a select where the definition has `options`, a checkbox for `onoff`, otherwise a slider with a number box (or the formatted value for notes and pan). Ranges are `QS.paramRange`, widened to take in a value a dump already holds above the spec limit (marked with ⚠). Changed values are marked against the original.
+- **Compare** sends the original dumps and pauses editing; pressing it again sends the edited ones. **Revert** asks first, then restores and sends the original. **Resync** sends the whole edited program and effect. **Store to User…** uses the same dialog as the inspector, showing what the slot holds now. **.syx** saves the edited program and effect.
+- Leaving with unsaved changes asks first (the Programs button, the sidebar, closing the tab). Grid keys are off while editing, so arrow keys can't send another program over the one being edited. A Program Change from the QS while editing raises a notice that the QS no longer plays the edit.
+- The MIDI monitor names each `10H` message by its field ("S2 Filter frequency = 57", "S1 drum 5 Volume = 20").
+
+### Demo QS
+
+`?demo` applies `10H` edits with `QS.applyParamEdit`: it finds the field the way the QS would (the sound's mode decides the table, drum fields go to the selected drum, effects match on send), limits the value to the spec range and writes it. It answers `09` with the edit effect and keeps user effects. Messages are handled in order, so a request after an edit sees the edit. The tests apply every generated edit the same way, on keyboard, drum and mixed programs and in every effect configuration and type: each lands on its own bits only, and the editor's copy stays byte-identical to the "QS".
+
+### Not checked on hardware yet
+
+- That the QS takes these `10H` messages as the spec says, including the drum select and the name through func 7.
+- What the QS does to a sound's data when its mode changes, and to the effect when its configuration or a type changes. The editor shows what the QS reads back, so this will show up on first use.
+- Configuration 4's overdrive rows (see above): the editor warns on that page, and Resync sends the whole effect.
+
 ## Hardware lessons so far
 
 - A plain notes-only path proves nothing about SysEx. Many sequencers, grooveboxes and cheap USB-MIDI cables pass channel messages but drop or mangle SysEx. The connection test exists for this.
 - Windows lets one app open a MIDI port at a time unless Windows MIDI Services is installed.
-- Opcode `10H` puts the QS into Edit mode and is ignored while it's in Compare. Expect the editor to need its own handling of that.
+- Opcode `10H` puts the QS into Edit mode and is ignored while it's in Compare (the QS's own COMPARE button, not the editor's). The editor says so in its notice, and when a mode or type change reads back unchanged it suggests leaving Compare.
 
 ## Conventions
 

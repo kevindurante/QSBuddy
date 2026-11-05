@@ -64,6 +64,7 @@
 
   /* ---------------- state ---------------- */
   var midi = new window.QSMidi();
+  var editor = null; // the program editor view (editor.js), created in start()
   var state = {
     view: store.get('view', 'synth:p1'),
     sel: store.get('sel', 0),
@@ -399,6 +400,10 @@
     }
     var status = bytes[0] & 0xF0;
     var ch = bytes[0] & 0x0F;
+    if (status === 0xC0 && ch === state.ch && editor.isOpen()) {
+      editor.externalChange('The QS switched to program ' + bytes[1] + ' (a Program Change on channel ' + (ch + 1) +
+        '), so it no longer plays what you\'re editing. Resync sends your version back to its edit buffer.');
+    }
     if (ch !== state.ch || !state.settings.follow) return;
     if (status === 0xB0 && bytes[1] === 0x00) {
       state.incomingBank = bytes[2];
@@ -423,6 +428,11 @@
     var top = $('lcdTop');
     var name = $('lcdName');
     var live = state.live;
+    if (editor && editor.name() !== null) {
+      top.textContent = ('EDIT' + (editor.isModified() ? '*' : '') + ' ← ' + editor.title() + '   CH' + (state.ch + 1)).toUpperCase();
+      name.textContent = editor.name();
+      return;
+    }
     if (!live || !bankExists(live.key)) {
       top.textContent = 'NO PROGRAM SENT';
       name.textContent = '----------';
@@ -759,9 +769,13 @@
 
   function renderInspector() {
     var body = $('inspectorBody');
+    var token = ++inspectorToken;
+    if (editor && editor.isOpen()) {
+      editor.renderInspector(body);
+      return;
+    }
     var ref = currentRef();
     var item = itemFor(ref);
-    var token = ++inspectorToken;
     if (!ref || !item) {
       body.innerHTML = '<p class="muted">Pick a program to see its details.</p>';
       return;
@@ -787,6 +801,7 @@
     html += '<div class="insp-actions">';
     html += '<button type="button" class="btn primary" data-act="send">' + (isSynth ? '▶ Select on QS' : '▶ Audition') + '</button>';
     html += '<button type="button" class="btn' + (fav ? ' active' : '') + '" data-act="fav" title="Favorite (F)">' + (fav ? '★' : '☆') + '</button>';
+    html += '<button type="button" class="btn" data-act="edit" title="Make this the playing program and edit it from here">Edit</button>';
     if (!isSynth) {
       html += '<button type="button" class="btn" data-act="store">Store to User…</button>';
     }
@@ -806,6 +821,8 @@
           ? 'No program data for this bank yet. Use "Read names from QS" to fetch it.'
           : 'Empty slot.') + '</p>';
         body.querySelector('[data-act="download"]').disabled = true;
+        // A synth program can still be edited: the editor reads it from the QS.
+        if (!isSynth) body.querySelector('[data-act="edit"]').disabled = true;
         return;
       }
       box.innerHTML = renderDetails(d);
@@ -1088,7 +1105,8 @@
     } finally {
       diagRunning = false;
       btn.disabled = false;
-      if (touched && state.live) sendRef(state.live);
+      if (touched && editor.isOpen()) editor.resend();
+      else if (touched && state.live) sendRef(state.live);
     }
   }
 
@@ -1096,20 +1114,28 @@
   var pendingStore = null;
 
   function openStoreDialog(ref) {
-    if (!needOutput()) return;
-    if (!midi.sysex) { toast('Storing needs SysEx access.', true); return; }
     var item = itemFor(ref);
     getProgramData(ref).then(function (d) {
       if (!d || !d.program) return;
-      pendingStore = { ref: ref, data: d, name: item.name };
-      $('storeName').textContent = item.name.trim();
-      var slot = $('storeSlot');
-      slot.value = ref.n;
-      updateStoreLabel();
-      $('storeDialog').showModal();
-      slot.focus();
-      slot.select();
+      showStoreDialog({ program: d.program, effect: d.effect, name: item.name, slot: ref.n });
     });
+  }
+
+  /*
+   * p: { program, effect, name, slot, onStored(n) }. The dialog's submit
+   * handler calls doStore() for the Overwrite button.
+   */
+  function showStoreDialog(p) {
+    if (!needOutput()) return;
+    if (!midi.sysex) { toast('Storing needs SysEx access.', true); return; }
+    pendingStore = p;
+    $('storeName').textContent = p.name.trim();
+    var slot = $('storeSlot');
+    slot.value = p.slot;
+    updateStoreLabel();
+    $('storeDialog').showModal();
+    slot.focus();
+    slot.select();
   }
 
   function updateStoreLabel() {
@@ -1128,16 +1154,23 @@
     pendingStore = null;
     if (!p) return;
     var n = Number($('storeSlot').value);
-    midi.send(QS.build.userProgramDump(n, p.data.program));
-    if (p.data.effect) midi.send(QS.build.userEffectDump(n, p.data.effect));
+    if (!midi.send(QS.build.userProgramDump(n, p.program))) {
+      toast('Couldn\'t send to the QS, so User ' + pad3(n) + ' wasn\'t changed. Check the MIDI output.', true);
+      return;
+    }
+    if (p.effect && !midi.send(QS.build.userEffectDump(n, p.effect))) {
+      toast('User ' + pad3(n) + ' got the program but not its effect. Check the MIDI output and store again.', true);
+      return;
+    }
     state.userEdits[n] = {
       name: p.name,
       at: Date.now(),
-      program: toB64(p.data.program),
-      effect: p.data.effect ? toB64(p.data.effect) : null
+      program: toB64(p.program),
+      effect: p.effect ? toB64(p.effect) : null
     };
     store.set('userEdits', state.userEdits);
     toast('Stored ' + p.name.trim() + ' to User ' + pad3(n) + '.');
+    if (p.onStored) p.onStored(n);
     renderAll();
   }
 
@@ -1145,17 +1178,95 @@
   function downloadSyx(ref) {
     var item = itemFor(ref);
     getProgramData(ref).then(function (d) {
-      if (!d || !d.program) return;
-      var parts = [QS.build.editProgramDump(0, d.program)];
-      if (d.effect) parts.push(QS.build.editEffectDump(0, d.effect));
-      var blob = new Blob(parts, { type: 'application/octet-stream' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = (item.name || 'program').trim().replace(/[^\w\-.& ]+/g, '_') + '.syx';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      if (d && d.program) saveSyx(item.name || 'program', d.program, d.effect);
     });
+  }
+
+  function saveSyx(name, program, effect) {
+    var parts = [QS.build.editProgramDump(0, program)];
+    if (effect) parts.push(QS.build.editEffectDump(0, effect));
+    var blob = new Blob(parts, { type: 'application/octet-stream' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (name.trim() || 'program').replace(/[^\w\-.& ]+/g, '_') + '.syx';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  /* ---------------- program editor ----------------
+   * Makes the program the one playing (Bank Select + Program Change for synth
+   * banks, edit buffer dumps otherwise), then reads the QS edit buffer and
+   * edit effect back, so the editor starts from what the QS really holds.
+   * Without a MIDI In, or when the QS doesn't answer, it falls back to the
+   * library / factory data and says so.
+   */
+  function isEditEffectDump(b, p) { return p && p.kind === 'qs' && p.op === QS.OP.EDIT_EFFECT; }
+
+  async function openEditor(ref) {
+    var item = itemFor(ref);
+    if (!item) return;
+    var k = parseKey(ref.key);
+    var title = (k.kind === 'synth' ? 'QS ' + SYNTH_BY_ID[k.id].title : shortLabel(ref.key)) + ' ' + pad3(ref.n);
+    $('main').classList.add('editing');
+    var token = editor.loading(title);
+    renderInspector();
+    var stored = await getProgramData(ref).catch(function () { return null; });
+    if (!editor.isLoading(token)) return;
+    var program = null;
+    var effect = null;
+    var why = null;
+    var notices = [];
+    var sent = false;
+    if (midi.out) sent = refEq(state.live, ref) || await sendRef(ref);
+    if (!midi.out) why = 'No MIDI output is selected';
+    else if (!midi.sysex) why = 'SysEx access is off';
+    else if (!midi.in) why = 'No MIDI In is selected, so the QS edit buffer can\'t be read';
+    else {
+      if (sent) await sleep(150);
+      try {
+        program = (await midi.request(QS.build.editProgramRequest(0), isEditDump, 2000)).data;
+        try {
+          effect = (await midi.request(QS.build.editEffectRequest(0), isEditEffectDump, 2000)).data;
+        } catch (err) {
+          effect = stored && stored.effect;
+          notices.push('The QS sent its program but not its effect. The Effects page shows ' +
+            (effect ? 'this browser\'s copy of the effect, which may not match the QS.' : 'nothing.'));
+        }
+      } catch (err) {
+        why = 'The QS didn\'t answer the edit buffer request';
+      }
+    }
+    if (!editor.isLoading(token)) return;
+    if (!program) {
+      if (!stored || !stored.program) {
+        editor.failed(token, why + ', and this browser has no data for this program, so there\'s nothing to edit. ' +
+          'Connect the QS MIDI Out to the MIDI In picked here and try again.');
+        return;
+      }
+      program = stored.program;
+      effect = stored.effect;
+      notices.push(why + ', so the editor starts from this browser\'s copy (see under the name).' + (midi.out && midi.sysex
+        ? ' Edits still go to the QS, but it may hold something else; Resync sends the whole program and effect to make them match.'
+        : ' Edits stay in this browser, but you can save them as a .syx file.'));
+    } else if (k.kind === 'synth' && item.name && QS.programName(program).trimEnd() !== item.name.trimEnd()) {
+      notices.push('The QS edit buffer holds "' + QS.programName(program).trimEnd() + '", but this browser lists "' + item.name.trimEnd() +
+        '" here. The editor shows what the QS holds. If that\'s not what you picked, check MIDI Program Select on the QS, or read this bank\'s names again.');
+    }
+    editor.open(token, {
+      program: program,
+      effect: effect,
+      title: title,
+      origin: why ? stored.origin : 'Read from the QS edit buffer',
+      notices: notices,
+      fromQS: !why,
+      slot: ref.n
+    });
+    renderInspector();
+  }
+
+  function closeEditor() {
+    return !editor.isOpen() || editor.close(false);
   }
 
   /* ---------------- opening files ---------------- */
@@ -1191,6 +1302,7 @@
       var p = QS.parseMessage(bytes);
       if (p && p.kind === 'identity') return 'Device reply: ' + p.model + ' v' + p.version;
       if (p && p.kind === 'qs') {
+        if (p.op === QS.OP.PARAM_EDIT) return editor.describeEdit(bytes) || OP_NAMES[p.op];
         var t = OP_NAMES[p.op] || ('QS opcode ' + p.op);
         if (p.op === QS.OP.MODE_SELECT) return t + ': ' + (p.num ? 'Mix' : 'Program');
         if (p.num !== null) t += ' #' + p.num;
@@ -1222,7 +1334,7 @@
   function bindEvents() {
     $('sidebar').addEventListener('click', function (e) {
       var b = e.target.closest('.nav-item');
-      if (!b) return;
+      if (!b || !closeEditor()) return;
       if (state.query) clearSearch();
       setView(b.dataset.key);
     });
@@ -1250,6 +1362,7 @@
       else if (act === 'fav') toggleFav(ref);
       else if (act === 'store') openStoreDialog(ref);
       else if (act === 'download') downloadSyx(ref);
+      else if (act === 'edit') openEditor(ref);
     });
 
     var search = $('search');
@@ -1271,10 +1384,12 @@
       if (document.querySelector('dialog[open]')) return;
       var t = e.target;
       var inField = t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA';
-      if (e.key === '/' && !inField) { e.preventDefault(); search.focus(); search.select(); return; }
+      if (e.key === '/' && !inField && !editor.isOpen()) { e.preventDefault(); search.focus(); search.select(); return; }
       if (inField || e.ctrlKey || e.metaKey || e.altKey) return;
       var key = e.key;
       if (key === 't' || key === 'T') { if (!e.repeat) testNote(true); return; }
+      // The grid's keys would send other programs over the one being edited.
+      if (editor.isOpen()) return;
       if (key === 'f' || key === 'F') { toggleFav(currentRef()); return; }
       if (key === 'Escape' && state.query) { clearSearch(); return; }
       if (key === 'PageDown' || key === 'PageUp') {
@@ -1436,6 +1551,26 @@
   }
 
   async function start() {
+    editor = window.QSEditor.create({
+      root: $('editor'),
+      midi: midi,
+      toast: toast,
+      esc: esc,
+      store: showStoreDialog,
+      save: saveSyx,
+      changed: function () { renderLcd(); renderInspector(); },
+      closed: function () {
+        $('main').classList.remove('editing');
+        renderInspector();
+        renderLcd();
+        $('grid').focus({ preventScroll: true });
+      }
+    });
+    window.addEventListener('beforeunload', function (e) {
+      if (!editor.isModified()) return;
+      e.preventDefault();
+      e.returnValue = '';
+    });
     bindEvents();
     if (!bankExists(state.view)) state.view = 'synth:p1';
     renderAll();

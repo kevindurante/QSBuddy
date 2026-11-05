@@ -21,16 +21,23 @@ The foundation for every editor page. Mostly done; see [Parameter model](archite
 
 ## 2. Program editor
 
-- Fetch the edit buffer (`03`), edit it locally, send each change live with opcode `10H` (debounced), and send a full dump (`02`) to resync.
-- Pages per sound that follow the QS's own functions: Sample, Level, Pitch, Filter, Amp, Range, Mod matrix (6 slots), three LFOs, three envelopes, Tracking generator.
-- Drum sounds: per-drum sample, level, pan, pitch, decay, note, mute group.
-- Compare against the stored version, revert, rename, store to a chosen User slot.
-- Expect `10H` to put the QS into Edit mode and to be ignored while it's in Compare.
+First version done; see [Program editor](architecture.md#program-editor).
+
+- Done: Edit in the inspector reads the QS edit buffer and edit effect (`03` / `09`), or falls back to this browser's copy with a warning. Each change goes live with `10H`, at most every 30 ms per parameter, always ending on the final value. Resync sends the full dumps.
+- Done: pages per sound that follow the QS's functions (Sample, Level, Pitch, Filter, Amp, Range, Mod matrix, three LFOs, three envelopes, Tracking), a drum page for the 10 drums, and a program page with the name and each sound's mode and enable.
+- Done: Compare, Revert, rename, store to a chosen User slot (with its confirm dialog), save as `.syx`, a modified marker and a warning before leaving with unsaved changes.
+- Done: the demo QS applies `10H` edits and answers `09`, so `?demo` runs the whole loop.
+- Left: try it on the QS7 with a direct MIDI connection: live edits, the drum select, the name through func 7 on a drum sound, and what the QS does to a sound's data when its mode changes (the editor shows what it reads back).
+- Left: names for samples, mod sources and destinations, LFO waveforms and the like, which show as numbers until the Reference Manual's lists are added (phase 1).
+- Left: an envelope or tracking-curve drawing next to the numbers would help.
 
 ## 3. Effects editor
 
-- All five configurations (4 sends + reverb, 4 sends + 2 reverbs, 4 sends + Leslie, 2 sends + EQ, overdrive/chorus/delay/reverb/Leslie), showing only the parameters the selected types use.
-- Edit live with `10H` (mode 3) and keep the effect with its program when storing.
+Mostly done inside the program editor's Effects page.
+
+- Done: all five configurations, showing only the parameters the current configuration and types use, edited live with `10H` (mode 3). Configuration and type changes read the QS back. Store keeps the effect with its program.
+- Left: settle configuration 4's overdrive rows on hardware (see [Parameter model](architecture.md#parameter-model)); the page warns about them meanwhile.
+- Left: reverb type names, from the Reference Manual.
 
 ## 4. Mixes and global settings
 
